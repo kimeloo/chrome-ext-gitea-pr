@@ -1,0 +1,10 @@
+{
+  "name": "gitea-pr-status",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "preview": "node preview/build.mjs",
+    "preview:serve": "node preview/serve.mjs"
+  }
+}
