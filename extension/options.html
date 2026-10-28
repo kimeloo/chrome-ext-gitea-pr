@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gitea PR Status 설정</title>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="common.css">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="page">
+    <header class="page-head">
+      <img src="icons/icon32.png" width="32" height="32" alt="">
+      <div>
+        <h1>Gitea PR Status</h1>
+        <p class="muted">설정</p>
+      </div>
+    </header>
+
+    <div class="layout">
+      <nav id="side-nav" class="side-nav" aria-label="설정 메뉴">
+        <ol>
+          <li><a class="side-nav-link" href="#sec-connection">Gitea 연결</a></li>
+          <li><a class="side-nav-link" href="#sec-theme">테마</a></li>
+          <li><a class="side-nav-link" href="#sec-notify">알림</a></li>
+          <li><a class="side-nav-link" href="#sec-tab-order">탭 순서</a></li>
+          <li><a class="side-nav-link" href="#sec-fields">표시 항목</a></li>
+        </ol>
+      </nav>
+
+      <div class="form-col">
+        <section id="sec-connection" class="panel" aria-labelledby="h-connection">
+          <h2 id="h-connection">Gitea 연결</h2>
+
+          <div class="field">
+            <label for="base-url">Gitea 주소</label>
+            <input id="base-url" type="text" inputmode="url" autocomplete="off" spellcheck="false"
+                   placeholder="https://git.example.com" aria-describedby="base-url-hint">
+            <p id="base-url-hint" class="hint">하위 경로에 설치된 경우 경로까지 입력합니다. 예: https://example.com/gitea</p>
+          </div>
+
+          <div class="field">
+            <label for="token">토큰</label>
+            <div class="input-row">
+              <input id="token" type="password" autocomplete="off" spellcheck="false" aria-describedby="token-hint">
+              <button id="token-toggle" type="button" class="icon-btn" aria-pressed="false"
+                      aria-label="토큰 보기" title="토큰 보기"></button>
+            </div>
+            <p id="token-hint" class="hint">토큰은 이 브라우저의 확장 저장소(chrome.storage.local)에만 저장되며 동기화되지 않고, 입력한 Gitea 주소로만 전송됩니다.</p>
+          </div>
+
+          <ol class="steps">
+            <li>Gitea → 오른쪽 위 프로필 → 설정 → 애플리케이션</li>
+            <li>새 토큰 생성: 권한에서 issue · notification · repository · user 를 '읽기'로 선택</li>
+            <li>생성된 토큰을 붙여넣고 저장</li>
+          </ol>
+
+          <p id="conn-status" class="conn-status" role="status" aria-live="polite" hidden></p>
+        </section>
+
+        <section id="sec-theme" class="panel" aria-labelledby="h-theme">
+          <h2 id="h-theme">테마</h2>
+          <div class="segmented" role="radiogroup" aria-labelledby="h-theme">
+            <label class="seg"><input type="radio" name="theme" value="system"><span>시스템 설정</span></label>
+            <label class="seg"><input type="radio" name="theme" value="light"><span>라이트</span></label>
+            <label class="seg"><input type="radio" name="theme" value="dark"><span>다크</span></label>
+          </div>
+        </section>
+
+        <section id="sec-notify" class="panel" aria-labelledby="h-notify">
+          <h2 id="h-notify">알림</h2>
+          <div id="notify-master"></div>
+
+          <fieldset id="notify-options" class="notify-options" aria-labelledby="h-notify" disabled>
+            <div class="field">
+              <label for="notify-interval">확인 주기</label>
+              <select id="notify-interval"></select>
+            </div>
+            <div id="notify-events" class="notify-events"></div>
+            <div class="note notes">
+              <p>Gitea 알림함 기준입니다. watching 중인 저장소와 내가 참여한 PR의 소식을 받으며, 저장소 watch 설정은 Gitea에서 바꿀 수 있습니다.</p>
+              <p>Gitea 웹에서 이미 읽은 알림과 내가 한 행동은 알리지 않습니다.</p>
+              <p>알림이 보이지 않으면 운영체제의 알림 설정에서 Chrome 알림이 켜져 있는지 확인하세요.</p>
+            </div>
+          </fieldset>
+        </section>
+
+        <section id="sec-tab-order" class="panel" aria-labelledby="h-tab-order">
+          <h2 id="h-tab-order">탭 순서</h2>
+          <p class="hint">팝업에 표시할 탭의 순서입니다. 오른쪽 ≡ 버튼을 끌어서 순서를 바꾸며, 첫 번째 탭이 팝업을 열 때 처음 보이는 탭입니다.</p>
+          <ol id="tab-order" class="tab-order"></ol>
+          <p class="note">≡ 버튼에 포커스한 뒤 ↑ ↓ 키로도 순서를 바꿀 수 있습니다.</p>
+        </section>
+
+        <section id="sec-fields" class="panel" aria-labelledby="h-fields">
+          <h2 id="h-fields">표시 항목</h2>
+          <div id="field-groups"></div>
+          <p class="note">PR 번호와 제목은 항상 표시됩니다.</p>
+        </section>
+      </div>
+
+      <aside class="preview-col" aria-labelledby="h-preview">
+        <h2 id="h-preview">미리보기</h2>
+        <p class="hint">샘플 데이터로 표시한 미리보기입니다.</p>
+        <div id="preview" class="popup-frame">
+          <header class="bar">
+            <img class="bar-icon" src="icons/icon16.png" width="16" height="16" alt="">
+            <span class="bar-title">Gitea PR</span>
+            <span class="bar-updated">방금 전 업데이트</span>
+            <button id="preview-sync" type="button" class="icon-btn" tabindex="-1" aria-hidden="true"></button>
+            <button id="preview-gear" type="button" class="icon-btn" tabindex="-1" aria-hidden="true"></button>
+          </header>
+          <nav id="preview-tabs" class="tabs" role="tablist"></nav>
+          <div id="preview-list" class="preview-list"></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <footer class="action-bar">
+    <div class="action-inner">
+      <span id="dirty" class="dirty" hidden>저장하지 않은 변경사항이 있습니다.</span>
+      <span id="status" class="status" role="status" aria-live="polite"></span>
+      <span class="spacer"></span>
+      <button id="reset" type="button" class="btn btn-secondary">기본값으로</button>
+      <button id="save" type="button" class="btn btn-primary" disabled>저장</button>
+    </div>
+  </footer>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>
