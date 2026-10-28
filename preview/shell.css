@@ -1,0 +1,1149 @@
+/* 미리보기 셸: 가짜 Chrome 창, 팝업, 권한 안내, 토스트, 시뮬레이터. OS의 라이트/다크 설정을 따른다. */
+
+:root {
+  color-scheme: light dark;
+
+  --desk-bg: linear-gradient(135deg, #b7c6dc 0%, #d9e2ee 48%, #c4d0e2 100%);
+  --notice-bg: #fff4ce;
+  --notice-fg: #5c4600;
+  --notice-line: #ecd78a;
+
+  --win-shadow: 0 18px 48px rgba(15, 23, 42, 0.3), 0 0 0 1px rgba(15, 23, 42, 0.16);
+  --strip-bg: #dee1e6;
+  --tab-active: #fff;
+  --tab-hover: rgba(255, 255, 255, 0.55);
+  --tab-text: #202124;
+  --tab-muted: #3c4043;
+  --toolbar-bg: #fff;
+  --omni-bg: #f1f3f4;
+  --omni-hover: #e8eaed;
+  --omni-text: #202124;
+  --icon: #5f6368;
+  --icon-hover: rgba(60, 64, 67, 0.12);
+  --content-bg: #fff;
+  --line: #dadce0;
+  --text: #202124;
+  --muted: #5f6368;
+  --accent: #1a73e8;
+  --accent-hover: #1765cc;
+  --accent-soft: #e8f0fe;
+  --accent-fg: #fff;
+  --popup-shadow: 0 4px 8px rgba(60, 64, 67, 0.3), 0 10px 28px rgba(60, 64, 67, 0.28), 0 0 0 1px rgba(60, 64, 67, 0.16);
+  --bubble-bg: #fff;
+  --bubble-shadow: 0 2px 6px rgba(60, 64, 67, 0.3), 0 8px 24px rgba(60, 64, 67, 0.24), 0 0 0 1px rgba(60, 64, 67, 0.12);
+
+  --toast-bg: #f9f9f9;
+  --toast-line: rgba(0, 0, 0, 0.1);
+  --toast-shadow: 0 8px 28px rgba(0, 0, 0, 0.26), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  --toast-text: #1b1b1b;
+  --toast-muted: #5d5d5d;
+  --toast-hover: rgba(0, 0, 0, 0.06);
+
+  --sim-bg: #f8f9fa;
+  --sim-line: #dadce0;
+  --sim-text: #202124;
+  --sim-muted: #5f6368;
+  --sim-ctl: #fff;
+  --sim-ctl-hover: #f1f3f4;
+  --ok: #137333;
+  --ok-bg: #e6f4ea;
+  --err: #b3261e;
+  --err-bg: #fce8e6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --desk-bg: linear-gradient(135deg, #0c1018 0%, #151b27 48%, #0e131c 100%);
+    --notice-bg: #3a2f0a;
+    --notice-fg: #f4e3a1;
+    --notice-line: #5a4a12;
+
+    --win-shadow: 0 18px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.14);
+    --strip-bg: #202124;
+    --tab-active: #35363a;
+    --tab-hover: rgba(255, 255, 255, 0.1);
+    --tab-text: #e8eaed;
+    --tab-muted: #9aa0a6;
+    --toolbar-bg: #35363a;
+    --omni-bg: #282828;
+    --omni-hover: #303134;
+    --omni-text: #e8eaed;
+    --icon: #bdc1c6;
+    --icon-hover: rgba(232, 234, 237, 0.14);
+    --content-bg: #202124;
+    --line: #4a4c50;
+    --text: #e8eaed;
+    --muted: #9aa0a6;
+    --accent: #8ab4f8;
+    --accent-hover: #aecbfa;
+    --accent-soft: #394457;
+    --accent-fg: #202124;
+    --popup-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), 0 10px 28px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.16);
+    --bubble-bg: #3c3d41;
+    --bubble-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.14);
+
+    --toast-bg: #2c2c2c;
+    --toast-line: rgba(255, 255, 255, 0.1);
+    --toast-shadow: 0 8px 28px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    --toast-text: #f3f3f3;
+    --toast-muted: #b4b4b4;
+    --toast-hover: rgba(255, 255, 255, 0.1);
+
+    --sim-bg: #1b1c1f;
+    --sim-line: #3a3c40;
+    --sim-text: #e8eaed;
+    --sim-muted: #9aa0a6;
+    --sim-ctl: #2a2b2f;
+    --sim-ctl-hover: #34363b;
+    --ok: #81c995;
+    --ok-bg: #1e3a29;
+    --err: #f28b82;
+    --err-bg: #4a2220;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--desk-bg);
+  color: var(--text);
+  font: 13px/1.5 "Segoe UI", system-ui, -apple-system, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+/* ---- 상단 안내 ---- */
+
+#preview-notice {
+  flex: none;
+  padding: 7px 16px;
+  border-bottom: 1px solid var(--notice-line);
+  background: var(--notice-bg);
+  color: var(--notice-fg);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
+}
+
+#desk {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+#stage-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+#stage {
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  overflow: auto;
+}
+
+/* ---- 가짜 Chrome 창 ---- */
+
+#browser {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 1000px;
+  height: 100%;
+  min-height: 600px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--content-bg);
+  box-shadow: var(--win-shadow);
+}
+
+#tabstrip {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: flex-end;
+  height: 40px;
+  padding: 8px 140px 0 8px;
+  background: var(--strip-bg);
+  user-select: none;
+}
+
+#tab-list {
+  display: flex;
+  align-items: flex-end;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  flex: 0 1 240px;
+  align-items: center;
+  gap: 8px;
+  min-width: 44px;
+  height: 32px;
+  padding: 0 6px 0 12px;
+  border-radius: 8px 8px 0 0;
+  color: var(--tab-muted);
+  font-size: 12px;
+  cursor: default;
+}
+
+.tab:not(.active):hover {
+  background: var(--tab-hover);
+}
+
+.tab.active {
+  z-index: 1;
+  background: var(--tab-active);
+  color: var(--tab-text);
+}
+
+/* 활성 탭 양옆의 오목한 모서리 */
+.tab.active::before,
+.tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 8px;
+  height: 8px;
+  pointer-events: none;
+}
+
+.tab.active::before {
+  left: -8px;
+  border-bottom-right-radius: 8px;
+  box-shadow: 4px 4px 0 4px var(--tab-active);
+}
+
+.tab.active::after {
+  right: -8px;
+  border-bottom-left-radius: 8px;
+  box-shadow: -4px 4px 0 4px var(--tab-active);
+}
+
+/* 비활성 탭 사이의 구분선 */
+.tab:not(.active):not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  right: -1px;
+  width: 1px;
+  height: 16px;
+  background: var(--line);
+}
+
+.tab.active + .tab::after,
+.tab:has(+ .tab.active)::after {
+  display: none;
+}
+
+.tab-favicon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.tab-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab-close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--icon);
+  cursor: default;
+}
+
+.tab-close:hover {
+  background: var(--icon-hover);
+}
+
+.new-tab {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin: 0 0 2px 4px;
+  border-radius: 50%;
+  color: var(--tab-muted);
+}
+
+.new-tab:hover {
+  background: var(--tab-hover);
+}
+
+.win-controls {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  height: 32px;
+  color: var(--tab-text);
+}
+
+.win-btn {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 32px;
+}
+
+.win-btn:hover {
+  background: var(--tab-hover);
+}
+
+.win-close:hover {
+  background: #c42b1c;
+  color: #fff;
+}
+
+.toolbar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  height: 40px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--line);
+  background: var(--toolbar-bg);
+}
+
+.tool-btn {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--icon);
+  cursor: default;
+}
+
+.tool-btn:hover {
+  background: var(--icon-hover);
+}
+
+.tool-btn.inert {
+  user-select: none;
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8ab4f8, #669df6);
+}
+
+#omnibox {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  height: 30px;
+  margin: 0 6px;
+  padding: 0 14px 0 4px;
+  overflow: hidden;
+  border-radius: 15px;
+  background: var(--omni-bg);
+  color: var(--omni-text);
+  font-size: 14px;
+  user-select: text;
+}
+
+#omnibox:hover {
+  background: var(--omni-hover);
+}
+
+.omnibox-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: var(--icon);
+}
+
+.omnibox-url {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ext-action {
+  cursor: pointer;
+}
+
+.ext-action img {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.ext-action[aria-expanded="true"] {
+  background: var(--icon-hover);
+}
+
+.ext-action:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+#content {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: var(--content-bg);
+}
+
+.pane {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+}
+
+.pane[hidden] {
+  display: none;
+}
+
+.frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* ---- 새 탭(안내 페이지) ---- */
+
+.start-pane {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+
+.start-card {
+  width: 100%;
+  max-width: 560px;
+  padding: 28px 32px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--content-bg);
+}
+
+.start-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.start-brand img {
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+}
+
+.start-card h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.start-card p {
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+
+.start-card .howto {
+  font-size: 14px;
+}
+
+.start-note {
+  margin: 16px 0 0 !important;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+}
+
+/* ---- 링크 탭(실제 페이지 대신 표시) ---- */
+
+.page-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px;
+  text-align: center;
+}
+
+.placeholder-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.placeholder-url {
+  max-width: 720px;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.placeholder-note {
+  color: var(--muted);
+}
+
+/* ---- 사용 순서 목록 ---- */
+
+.howto {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: howto;
+}
+
+.howto li {
+  position: relative;
+  padding-left: 28px;
+  counter-increment: howto;
+}
+
+.howto li::before {
+  content: counter(howto);
+  position: absolute;
+  top: 1px;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.howto b {
+  font-weight: 600;
+}
+
+/* ---- 팝업 ---- */
+
+#popup {
+  position: absolute;
+  z-index: 50;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: var(--popup-shadow);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease-out, transform 0.12s ease-out;
+}
+
+#popup.ready {
+  opacity: 1;
+  transform: none;
+}
+
+#popup-frame {
+  display: block;
+  width: 440px;
+  height: 160px;
+  border: 0;
+}
+
+/* ---- 권한 요청 ---- */
+
+#perm-prompt {
+  position: absolute;
+  z-index: 60;
+  width: 360px;
+  padding: 16px 16px 12px;
+  border-radius: 12px;
+  background: var(--bubble-bg);
+  box-shadow: var(--bubble-shadow);
+  color: var(--text);
+}
+
+.perm-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.perm-head img {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+}
+
+.perm-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.perm-body {
+  margin: 0 0 8px;
+  color: var(--muted);
+}
+
+.perm-hosts {
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.perm-hosts li {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.perm-hosts li + li {
+  margin-top: 4px;
+}
+
+.perm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.perm-btn {
+  min-width: 64px;
+  padding: 6px 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: transparent;
+  color: var(--accent);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.perm-btn:hover {
+  background: var(--accent-soft);
+}
+
+.perm-btn.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.perm-btn.primary:hover {
+  background: var(--accent-hover);
+}
+
+.perm-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---- 알림 토스트 ---- */
+
+#toasts {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 364px;
+  max-width: calc(100% - 32px);
+  pointer-events: none;
+}
+
+.toast {
+  padding: 10px 12px 12px;
+  border: 1px solid var(--toast-line);
+  border-radius: 8px;
+  background: var(--toast-bg);
+  box-shadow: var(--toast-shadow);
+  color: var(--toast-text);
+  cursor: pointer;
+  pointer-events: auto;
+  animation: toast-in 0.22s ease-out;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.toast-app {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  color: var(--toast-muted);
+  font-size: 11.5px;
+}
+
+.toast-app-icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #4285f4 0 28%, #fff 29% 40%, transparent 41%),
+    conic-gradient(#ea4335 0 33%, #34a853 0 66%, #fbbc04 0);
+}
+
+.toast-app-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toast-close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin: -4px -4px -4px 0;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--toast-muted);
+  cursor: pointer;
+}
+
+.toast-close:hover {
+  background: var(--toast-hover);
+  color: var(--toast-text);
+}
+
+.toast-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.toast-icon {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+}
+
+.toast-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.toast-message {
+  margin-top: 2px;
+  font-size: 13px;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.toast-context {
+  margin-top: 2px;
+  color: var(--toast-muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.toast-context:empty {
+  display: none;
+}
+
+/* ---- 시뮬레이터 ---- */
+
+#sim {
+  position: relative;
+  flex: none;
+  width: 340px;
+  border-left: 1px solid var(--sim-line);
+  background: var(--sim-bg);
+  color: var(--sim-text);
+}
+
+.sim-body {
+  position: absolute;
+  inset: 0;
+  padding: 14px 16px 24px;
+  overflow-y: auto;
+}
+
+.sim-head h2 {
+  margin: 0 36px 2px 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.sim-lead {
+  margin: 0 0 4px;
+  color: var(--sim-muted);
+  font-size: 12px;
+}
+
+.sim-sec {
+  padding: 12px 0;
+  border-top: 1px solid var(--sim-line);
+}
+
+.sim-sec:first-of-type {
+  margin-top: 10px;
+}
+
+.sim-sec h3 {
+  margin: 0 0 8px;
+  color: var(--sim-muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.sim-sec .howto {
+  font-size: 12.5px;
+}
+
+.sim-hint {
+  margin: 8px 0 0;
+  color: var(--sim-muted);
+  font-size: 12px;
+}
+
+.sim-btn {
+  padding: 7px 12px;
+  border: 1px solid var(--sim-line);
+  border-radius: 7px;
+  background: var(--sim-ctl);
+  color: var(--sim-text);
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+}
+
+.sim-btn:hover:not(:disabled) {
+  background: var(--sim-ctl-hover);
+}
+
+.sim-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sim-btn:focus-visible,
+.sim-field select:focus-visible,
+.sim-log-item:focus-visible,
+#sim-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.sim-btn.primary {
+  width: 100%;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.sim-btn.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.sim-btn.danger {
+  width: 100%;
+  color: var(--err);
+}
+
+.sim-check,
+.sim-radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  cursor: pointer;
+}
+
+.sim-radios {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--sim-line);
+}
+
+.sim-check input,
+.sim-radio input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.sim-field {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.sim-field > span {
+  color: var(--sim-muted);
+  font-size: 12px;
+}
+
+.sim-field select {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--sim-line);
+  border-radius: 7px;
+  background: var(--sim-ctl);
+  color: var(--sim-text);
+  text-overflow: ellipsis;
+}
+
+.sim-events {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.sim-event-group h4 {
+  margin: 0 0 4px;
+  color: var(--sim-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.sim-event-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.sim-event-grid .sim-btn {
+  padding: 6px 8px;
+  font-size: 12.5px;
+}
+
+.sim-result {
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  border-radius: 7px;
+  background: var(--sim-ctl);
+  color: var(--sim-text);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+
+.sim-result:empty {
+  display: none;
+}
+
+.sim-result[data-ok="true"] {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+.sim-result[data-ok="false"] {
+  background: var(--err-bg);
+  color: var(--err);
+}
+
+.sim-alarm {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.sim-log {
+  display: grid;
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.sim-log:empty::before {
+  content: "아직 표시된 알림이 없습니다.";
+  color: var(--sim-muted);
+  font-size: 12px;
+}
+
+.sim-log-item {
+  display: grid;
+  gap: 1px;
+  padding: 8px 10px;
+  border: 1px solid var(--sim-line);
+  border-radius: 7px;
+  background: var(--sim-ctl);
+  color: var(--sim-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.sim-log-item:hover {
+  background: var(--sim-ctl-hover);
+}
+
+.sim-log-time {
+  color: var(--sim-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sim-log-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.sim-log-message {
+  font-size: 12.5px;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.sim-log-context {
+  color: var(--sim-muted);
+  font-size: 11.5px;
+  overflow-wrap: anywhere;
+}
+
+.sim-log-context:empty {
+  display: none;
+}
+
+.sim-sec-last {
+  padding-bottom: 0;
+}
+
+/* 접기/펼치기 */
+
+#sim-toggle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sim-muted);
+  cursor: pointer;
+}
+
+#sim-toggle:hover {
+  background: var(--sim-ctl-hover);
+  color: var(--sim-text);
+}
+
+.sim-toggle-label {
+  display: none;
+}
+
+body.sim-collapsed #sim {
+  width: 0;
+  border-left: 0;
+}
+
+body.sim-collapsed .sim-body {
+  display: none;
+}
+
+body.sim-collapsed #sim-toggle {
+  top: 50%;
+  right: 0;
+  flex-direction: column;
+  padding: 10px 6px;
+  border: 1px solid var(--sim-line);
+  border-right: 0;
+  border-radius: 8px 0 0 8px;
+  background: var(--sim-bg);
+  transform: translateY(-50%);
+}
+
+body.sim-collapsed #sim-toggle .chevron {
+  transform: rotate(180deg);
+  transform-origin: center;
+}
+
+body.sim-collapsed .sim-toggle-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  writing-mode: vertical-rl;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #popup,
+  .toast {
+    animation: none;
+    transition: none;
+  }
+}

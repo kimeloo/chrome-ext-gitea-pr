@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Gitea PR Status · 미리보기</title>
+  <style>
+/*@SHELL_CSS*/
+  </style>
+</head>
+<body>
+  <div id="preview-notice" role="note">미리보기 모드 · 예시 데이터로 동작하며 실제 Gitea에 연결하지 않습니다.</div>
+
+  <div id="desk">
+    <div id="stage-wrap">
+      <div id="stage">
+        <div id="browser">
+          <div id="tabstrip">
+            <div id="tab-list" role="tablist" aria-label="탭"></div>
+            <span class="new-tab" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            </span>
+            <div class="win-controls" aria-hidden="true">
+              <span class="win-btn"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M4 11.5h16v1H4z"/></svg></span>
+              <span class="win-btn"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" fill-rule="evenodd" d="M5 5h14v14H5zM6 6v12h12V6z"/></svg></span>
+              <span class="win-btn win-close"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="none" stroke="currentColor" stroke-width="1.2" d="M5.5 5.5l13 13M18.5 5.5l-13 13"/></svg></span>
+            </div>
+          </div>
+
+          <div id="toolbar" class="toolbar">
+            <span class="tool-btn inert" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></span>
+            <span class="tool-btn inert" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg></span>
+            <span class="tool-btn inert" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></span>
+            <div id="omnibox" aria-label="주소 표시줄" aria-readonly="true"><span class="omnibox-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg></span><span id="omnibox-url" class="omnibox-url"></span></div>
+            <button type="button" id="ext-action" class="tool-btn ext-action" aria-haspopup="dialog" aria-expanded="false"><img alt="" width="18" height="18"></button>
+            <span class="tool-btn inert" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z"/></svg></span>
+            <span class="tool-btn inert" aria-hidden="true"><span class="avatar"></span></span>
+            <span class="tool-btn inert" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></span>
+          </div>
+
+          <div id="content"></div>
+        </div>
+      </div>
+      <div id="toasts" aria-live="polite"></div>
+      <div id="bg-host" hidden></div>
+    </div>
+
+    <aside id="sim" aria-label="시뮬레이터">
+      <button type="button" id="sim-toggle" aria-controls="sim-body" aria-expanded="true" title="시뮬레이터 접기">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path class="chevron" fill="currentColor" d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+        <span class="sim-toggle-label">시뮬레이터</span>
+      </button>
+
+      <div id="sim-body" class="sim-body">
+        <header class="sim-head">
+          <h2>시뮬레이터</h2>
+          <p class="sim-lead">가짜 Gitea 서버와 이벤트를 조작해 팝업·설정·알림을 확인합니다.</p>
+        </header>
+
+        <section class="sim-sec" aria-labelledby="sim-h-howto">
+          <h3 id="sim-h-howto">사용 순서</h3>
+          <div id="sim-howto"></div>
+        </section>
+
+        <section class="sim-sec" aria-labelledby="sim-h-settings">
+          <h3 id="sim-h-settings">설정</h3>
+          <button type="button" id="sim-fill" class="sim-btn primary">설정에 예시 값 입력</button>
+          <p id="sim-fill-note" class="sim-hint" role="status">설정 페이지의 주소와 토큰 칸을 채웁니다. 입력 후 저장을 눌러 주세요.</p>
+        </section>
+
+        <section class="sim-sec" aria-labelledby="sim-h-server">
+          <h3 id="sim-h-server">서버</h3>
+          <label class="sim-check"><input type="checkbox" id="sim-offline"><span>서버 응답 없음</span></label>
+          <label class="sim-check"><input type="checkbox" id="sim-slow"><span>느린 응답</span></label>
+          <div class="sim-radios" role="radiogroup" aria-label="토큰 상태">
+            <label class="sim-radio"><input type="radio" name="sim-token" value="ok" checked><span>정상 토큰</span></label>
+            <label class="sim-radio"><input type="radio" name="sim-token" value="invalid"><span>잘못된 토큰 (401)</span></label>
+            <label class="sim-radio"><input type="radio" name="sim-token" value="noNotification"><span>알림 권한 없는 토큰 (403)</span></label>
+          </div>
+        </section>
+
+        <section class="sim-sec" aria-labelledby="sim-h-events">
+          <h3 id="sim-h-events">이벤트 만들기</h3>
+          <label class="sim-field"><span>대상 PR</span><select id="sim-pr"></select></label>
+          <label class="sim-field"><span>행위자</span><select id="sim-actor"></select></label>
+          <div id="sim-events" class="sim-events"></div>
+          <p id="sim-result" class="sim-result" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="sim-sec" aria-labelledby="sim-h-alarm">
+          <h3 id="sim-h-alarm">알림 확인</h3>
+          <p id="sim-alarm" class="sim-alarm">알림 꺼짐</p>
+          <button type="button" id="sim-poll-now" class="sim-btn" disabled>지금 확인</button>
+          <p class="sim-hint">알림 주기를 기다리지 않고 바로 새 소식을 확인합니다. 다음 확인 일정은 바뀌지 않습니다.</p>
+        </section>
+
+        <section class="sim-sec" aria-labelledby="sim-h-log">
+          <h3 id="sim-h-log">알림 기록</h3>
+          <div id="sim-log" class="sim-log"></div>
+        </section>
+
+        <section class="sim-sec sim-sec-last">
+          <button type="button" id="sim-reset" class="sim-btn danger">처음 설치 상태로 되돌리기</button>
+        </section>
+      </div>
+    </aside>
+  </div>
+
+  <script id="gpr-assets" type="application/json">/*@ASSETS_JSON*/</script>
+  <script type="module">
+/*@SHELL_JS*/
+  </script>
+</body>
+</html>
