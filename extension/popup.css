@@ -1,0 +1,17 @@
+/* 팝업 페이지 레이아웃. 공통 컴포넌트 스타일은 common.css에 있다. */
+body {
+  width: 440px;
+  margin: 0;
+  background: var(--bg);
+}
+
+#list {
+  max-height: 520px;
+  min-height: 96px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+#refresh:disabled {
+  cursor: progress;
+}

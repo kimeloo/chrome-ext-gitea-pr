@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>Gitea PR Status</title>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="common.css">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="bar">
+    <img class="bar-icon" src="icons/icon16.png" width="16" height="16" alt="">
+    <h1 class="bar-title">Gitea PR</h1>
+    <span id="updated" class="bar-updated" aria-live="polite"></span>
+    <button id="refresh" type="button" class="icon-btn" aria-label="새로고침" title="새로고침"></button>
+    <button id="open-settings" type="button" class="icon-btn" aria-label="설정" title="설정"></button>
+  </header>
+  <nav id="tabs" class="tabs" role="tablist" aria-label="PR 분류"></nav>
+  <div id="banner" class="banner" role="status" hidden></div>
+  <main id="list" role="tabpanel"></main>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
