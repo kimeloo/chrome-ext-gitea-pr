@@ -3,10 +3,12 @@
 이 프로젝트의 주요 변경 사항을 기록합니다. 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 따르고,
 버전은 [유의적 버전](https://semver.org/lang/ko/)을 따릅니다.
 
-릴리즈할 때는 `## [Unreleased]`를 `## [x.y.z] - YYYY-MM-DD`로 바꾸고 `extension/manifest.json`의 `version`을 같은 값으로 맞춥니다.
-릴리즈 워크플로가 이 섹션을 GitHub Release 본문으로 사용합니다.
+릴리즈할 때는 `## [Unreleased]` 아래에 `## [x.y.z] - YYYY-MM-DD` 섹션을 추가하고 `extension/manifest.json`의 `version`을 같은 값으로 맞춥니다.
+릴리즈 워크플로가 해당 버전 섹션을 GitHub Release 본문으로 사용합니다.
 
 ## [Unreleased]
+
+## [1.0.0] - 2026-10-29
 
 ### Added
 - 툴바 팝업에서 열린 PR을 리뷰 요청 · 내 PR · 담당 · 리뷰함 · 멘션 탭으로 나누어 표시

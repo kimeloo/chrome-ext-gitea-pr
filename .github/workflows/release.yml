@@ -1,6 +1,6 @@
 name: Release
 
-# release로 시작하는 브랜치의 PR이 머지되면 manifest.json의 버전으로 GitHub Release를 만들고
+# release로 시작하는 브랜치의 PR이 main에 머지되면 manifest.json의 버전으로 GitHub Release를 만들고
 # 스토어 제출용 ZIP과 등록 자료를 첨부한다.
 on:
   pull_request:
@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   release:
-    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release')
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && startsWith(github.event.pull_request.head.ref, 'release')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
