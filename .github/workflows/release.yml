@@ -1,0 +1,84 @@
+name: Release
+
+# release로 시작하는 브랜치의 PR이 머지되면 manifest.json의 버전으로 GitHub Release를 만들고
+# 스토어 제출용 ZIP과 등록 자료를 첨부한다.
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Test
+        run: npm test
+
+      - name: Read version
+        id: version
+        run: |
+          version="$(node -p "JSON.parse(require('fs').readFileSync('extension/manifest.json', 'utf8')).version")"
+          if ! [[ "$version" =~ ^[0-9]+(\.[0-9]+){0,3}$ ]]; then
+            echo "::error file=extension/manifest.json::version '$version' 은(는) 크롬 확장 버전 형식(예: 1.2.3)이 아닙니다."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Check tag does not exist
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/v${VERSION}" > /dev/null; then
+            echo "::error::태그 v${VERSION} 이(가) 이미 있습니다. manifest.json의 version을 올리세요."
+            exit 1
+          fi
+
+      - name: Extract release notes from CHANGELOG
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          awk -v header="## [${VERSION}]" '
+            index($0, header) == 1 { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "::error file=CHANGELOG.md::'## [${VERSION}]' 섹션이 없거나 비어 있습니다."
+            exit 1
+          fi
+
+      - name: Package extension
+        run: npm run package
+
+      - name: Package store assets
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: zip -r -X "dist/store-assets-v${VERSION}.zip" PRIVACY.md store
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          TARGET: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          gh release create "v${VERSION}" \
+            --target "$TARGET" \
+            --title "v${VERSION}" \
+            --notes-file release-notes.md \
+            "dist/gitea-pr-status-v${VERSION}.zip#Chrome 웹 스토어 제출용 ZIP" \
+            "dist/store-assets-v${VERSION}.zip#스토어 등록 자료 (개인정보처리방침, 설명문, 스크린샷)"
