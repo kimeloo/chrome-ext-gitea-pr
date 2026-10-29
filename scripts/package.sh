@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# extension/ 폴더를 Chrome 웹 스토어에 올릴 ZIP으로 묶는다. 결과: dist/gitea-pr-status-v{version}.zip
+# extension/ 폴더를 브라우저 수동 설치 및 배포용 ZIP으로 묶는다. 결과: dist/gitea-pr-extension.zip
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-version="$(node -p "JSON.parse(require('fs').readFileSync('extension/manifest.json', 'utf8')).version")"
-out="dist/gitea-pr-status-v${version}.zip"
+out="dist/gitea-pr-extension.zip"
 
 mkdir -p dist
 rm -f "$out"
