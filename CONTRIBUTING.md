@@ -9,7 +9,7 @@ Gitea PR Status에 관심을 가져 주셔서 감사합니다. 이 문서는 개
 - Chrome Extension Manifest V3, 프레임워크와 빌드 단계 없음
 - 저장소: `chrome.storage.local` (설정, 마지막 조회 결과 캐시, 알림 확인 상태)
 - 테스트: Node.js 18+ (`node:test`)
-- CI/CD: GitHub Actions (`release*` 브랜치 PR 머지 시 GitHub Release 생성)
+- CI/CD: GitHub Actions (`release*` 브랜치 PR이 `main`에 머지되면 GitHub Release 생성)
 
 ## 디렉토리 구조
 
@@ -91,8 +91,8 @@ Gitea 알림함을 기준으로 하며, 이미 읽은 알림과 본인이 한 �
 ## 릴리즈 절차
 
 1. `release/x.y.z`처럼 `release`로 시작하는 브랜치를 만듭니다.
-2. `extension/manifest.json`의 `version`을 `x.y.z`로 올리고, `CHANGELOG.md`의 `## [Unreleased]`를 `## [x.y.z] - YYYY-MM-DD`로 바꿉니다. 필요하면 위에 새 `## [Unreleased]`를 추가합니다.
-3. PR을 만들어 머지합니다.
+2. `extension/manifest.json`의 `version`을 `x.y.z`로 올리고, `CHANGELOG.md`의 `## [Unreleased]` 아래에 `## [x.y.z] - YYYY-MM-DD` 섹션을 작성합니다.
+3. PR의 대상 브랜치를 `main`으로 지정하고 머지합니다.
 4. 머지되면 `.github/workflows/release.yml`이 테스트를 실행한 뒤 태그 `vx.y.z`로 GitHub Release를 만들고 다음 파일을 첨부합니다. 릴리즈 본문은 `CHANGELOG.md`의 해당 버전 섹션입니다.
    - `gitea-pr-status-vx.y.z.zip`: Chrome 웹 스토어에 업로드할 패키지
    - `store-assets-vx.y.z.zip`: 개인정보처리방침, 등록 문구·권한 사유(`store/listing.md`), 스크린샷, 프로모션 타일

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Gitea PR Status",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "나와 관련된 Gitea Pull Request 현황을 툴바 팝업으로 보여줍니다.",
   "permissions": ["storage", "alarms", "notifications"],
   "optional_host_permissions": ["https://*/*", "http://*/*"],
