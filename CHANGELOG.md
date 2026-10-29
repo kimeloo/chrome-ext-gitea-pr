@@ -8,6 +8,13 @@
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-29
+
+### Changed
+- 릴리즈 첨부 파일 구성을 단일 확장 배포 파일 `gitea-pr-extension.zip`으로 변경하고 스토어 등록 자료 첨부 제외
+- `README.md`: Releases에서 `gitea-pr-extension.zip`을 내려받아 확장 관리 페이지(`chrome://extensions`)에서 수동 설치하는 안내 추가
+- `CONTRIBUTING.md`: 패키징 명령 및 릴리즈 절차 설명 갱신
+
 ## [1.0.0] - 2026-10-29
 
 ### Added
