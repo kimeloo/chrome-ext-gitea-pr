@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node --test",
     "preview": "node preview/build.mjs",
-    "preview:serve": "node preview/serve.mjs"
+    "preview:serve": "node preview/serve.mjs",
+    "package": "bash scripts/package.sh"
   }
 }

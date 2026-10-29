@@ -60,7 +60,7 @@
 - Framework : 없음 (Chrome Extension Manifest V3, 빌드 단계 없음)
 - Database : `chrome.storage.local` (설정, 마지막 조회 결과 캐시, 알림 확인 상태)
 - Build Tool : 없음 (테스트 실행에만 Node.js 18+ 사용)
-- CI/CD : 없음
+- CI/CD : GitHub Actions (`release*` 브랜치 PR 머지 시 GitHub Release와 스토어 제출용 ZIP 생성)
 
 ## 3. 디렉토리 구조
 
@@ -85,6 +85,11 @@ extension/                 ------ 압축해제 로드 대상 폴더
     └── preview-data.js    ------ 설정 미리보기용 예시 데이터
 preview/                   ------ HTML 미리보기 생성기 (가짜 크롬 화면, chrome.* 대체 구현, 가짜 Gitea)
 test/                      ------ node:test 단위 테스트
+scripts/package.sh         ------ 스토어 제출용 ZIP 생성 (`npm run package`)
+store/                     ------ 스토어 등록 자료 (등록 문구, 권한 사유, 스크린샷, 프로모션 타일)
+.github/workflows/         ------ 릴리즈 워크플로
+CHANGELOG.md               ------ 변경 이력
+PRIVACY.md                 ------ 개인정보처리방침 (스토어 등록용)
 dist/                      ------ 생성물 (git 제외)
 ```
 
@@ -114,8 +119,20 @@ dist/                      ------ 생성물 (git 제외)
 
 ## 5. 운영 환경 세팅 및 실행 방법
 
-- 크롬 웹 스토어에 등록하지 않으며, 4장의 압축해제 로드 방식으로만 사용합니다.
-- 토큰은 이 브라우저의 `chrome.storage.local`에만 저장되며 크롬 동기화로 전송되지 않습니다. 다른 PC에서는 다시 설정해야 합니다.
+- 토큰은 이 브라우저의 `chrome.storage.local`에만 저장되며 크롬 동기화로 전송되지 않습니다. 다른 PC에서는 다시 설정해야 합니다. 자세한 내용은 [개인정보처리방침](PRIVACY.md)을 참고하세요.
+- 4장의 압축해제 로드 방식으로 사용하거나, 릴리즈 ZIP을 Chrome 웹 스토어에 제출해 배포합니다.
+
+### 릴리즈 절차
+1. `release/x.y.z` 같이 `release`로 시작하는 브랜치를 만듭니다.
+2. `extension/manifest.json`의 `version`을 `x.y.z`로 올리고, `CHANGELOG.md`의 `## [Unreleased]`를 `## [x.y.z] - YYYY-MM-DD`로 바꿉니다. 필요하면 위에 새 `## [Unreleased]`를 추가합니다.
+3. PR을 만들어 머지합니다.
+4. 머지되면 `.github/workflows/release.yml`이 테스트를 실행한 뒤 태그 `vx.y.z`로 GitHub Release를 만들고 다음 파일을 첨부합니다. 릴리즈 본문은 `CHANGELOG.md`의 해당 버전 섹션입니다.
+   - `gitea-pr-status-vx.y.z.zip`: Chrome 웹 스토어에 업로드할 패키지
+   - `store-assets-vx.y.z.zip`: 개인정보처리방침, 등록 문구·권한 사유(`store/listing.md`), 스크린샷, 프로모션 타일
+5. [개발자 대시보드](https://chrome.google.com/webstore/devconsole)에서 ZIP을 업로드하고 `store/listing.md`의 내용을 붙여 넣어 심사를 제출합니다. (스토어 업로드는 수동입니다.)
+
+로컬에서 ZIP만 만들어 보려면 `npm run package`를 실행합니다. 결과는 `dist/`에 생성됩니다.
+스토어 스크린샷과 프로모션 타일의 크기는 각각 1280×800, 440×280입니다.
 
 ## 6. 연동 시스템 및 시뮬레이터
 - 연동 대상: 사용자가 설정한 Gitea 서버 1대 (REST API v1, 헤더 `Authorization: token {토큰}`)
