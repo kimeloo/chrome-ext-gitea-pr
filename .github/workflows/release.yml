@@ -1,7 +1,7 @@
 name: Release
 
 # release로 시작하는 브랜치의 PR이 main에 머지되면 manifest.json의 버전으로 GitHub Release를 만들고
-# 스토어 제출용 ZIP과 등록 자료를 첨부한다.
+# 브라우저에 직접 설치 가능한 gitea-pr-extension.zip을 첨부한다.
 on:
   pull_request:
     types: [closed]
@@ -65,11 +65,6 @@ jobs:
       - name: Package extension
         run: npm run package
 
-      - name: Package store assets
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: zip -r -X "dist/store-assets-v${VERSION}.zip" PRIVACY.md store
-
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -80,5 +75,4 @@ jobs:
             --target "$TARGET" \
             --title "v${VERSION}" \
             --notes-file release-notes.md \
-            "dist/gitea-pr-status-v${VERSION}.zip#Chrome 웹 스토어 제출용 ZIP" \
-            "dist/store-assets-v${VERSION}.zip#스토어 등록 자료 (개인정보처리방침, 설명문, 스크린샷)"
+            dist/gitea-pr-extension.zip

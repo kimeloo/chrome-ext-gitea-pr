@@ -34,7 +34,7 @@ extension/                 ------ 압축해제 로드 대상 폴더
     └── preview-data.js    ------ 설정 미리보기용 예시 데이터
 preview/                   ------ HTML 미리보기 생성기 (가짜 크롬 화면, chrome.* 대체 구현, 가짜 Gitea)
 test/                      ------ node:test 단위 테스트
-scripts/package.sh         ------ 스토어 제출용 ZIP 생성
+scripts/package.sh         ------ 수동 설치 및 배포용 ZIP 생성
 store/                     ------ 스토어 등록 자료
 .github/workflows/         ------ 릴리즈 워크플로
 ```
@@ -50,7 +50,7 @@ store/                     ------ 스토어 등록 자료
 | `npm test` | 단위 테스트 |
 | `npm run preview` | `dist/gitea-pr-status-preview.html` 생성 (생성 시점의 스냅샷) |
 | `npm run preview:serve` | 로컬 미리보기 서버 실행 (기본 `http://127.0.0.1:4173/`) |
-| `npm run package` | 스토어 제출용 ZIP을 `dist/`에 생성 |
+| `npm run package` | 수동 설치용 ZIP(`dist/gitea-pr-extension.zip`) 생성 |
 
 ## HTML 미리보기(시뮬레이터)
 
@@ -93,9 +93,7 @@ Gitea 알림함을 기준으로 하며, 이미 읽은 알림과 본인이 한 �
 1. `release/x.y.z`처럼 `release`로 시작하는 브랜치를 만듭니다.
 2. `extension/manifest.json`의 `version`을 `x.y.z`로 올리고, `CHANGELOG.md`의 `## [Unreleased]` 아래에 `## [x.y.z] - YYYY-MM-DD` 섹션을 작성합니다.
 3. PR의 대상 브랜치를 `main`으로 지정하고 머지합니다.
-4. 머지되면 `.github/workflows/release.yml`이 테스트를 실행한 뒤 태그 `vx.y.z`로 GitHub Release를 만들고 다음 파일을 첨부합니다. 릴리즈 본문은 `CHANGELOG.md`의 해당 버전 섹션입니다.
-   - `gitea-pr-status-vx.y.z.zip`: Chrome 웹 스토어에 업로드할 패키지
-   - `store-assets-vx.y.z.zip`: 개인정보처리방침, 등록 문구·권한 사유(`store/listing.md`), 스크린샷, 프로모션 타일
+4. 머지되면 `.github/workflows/release.yml`이 테스트를 실행한 뒤 태그 `vx.y.z`로 GitHub Release를 만들고 `gitea-pr-extension.zip`을 첨부합니다. 사용자는 이 ZIP 파일을 내려받아 압축을 푼 뒤 크롬 확장 관리 페이지(`chrome://extensions`)에서 **압축해제된 확장 프로그램을 로드합니다**를 눌러 수동 설치할 수 있습니다. 릴리즈 본문은 `CHANGELOG.md`의 해당 버전 섹션입니다.
 5. [개발자 대시보드](https://chrome.google.com/webstore/devconsole)에서 ZIP을 업로드하고 `store/listing.md`의 내용을 붙여 넣어 심사를 제출합니다. 스토어 업로드는 수동입니다.
 
 스토어 스크린샷은 1280×800, 프로모션 타일은 440×280입니다.
