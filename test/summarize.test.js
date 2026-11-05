@@ -81,6 +81,16 @@ test('summarizeReviews: 대기 중인 요청이 과거 승인을 덮어쓴다', 
   assert.equal(find(out, 'alice').stale, false);
 });
 
+test('summarizeReviews: requested에 남아 있어도 코멘트만 제출했다면 commented', () => {
+  const out = summarizeReviews({
+    authorLogin: 'me',
+    requested: [user('alice')],
+    reviews: [review(1, 'alice', 'COMMENT')],
+  });
+  assert.equal(out.length, 1);
+  assert.equal(find(out, 'alice').state, 'commented');
+});
+
 test('summarizeReviews: 작성자 본인의 리뷰와 요청은 제외', () => {
   const out = summarizeReviews({
     authorLogin: 'me',
