@@ -34,9 +34,13 @@ export function summarizeReviews({ authorLogin, requested = [], reviews = [] }) 
   }
 
   // 현재 대기 중인 리뷰 요청이 과거 리뷰보다 우선한다.
+  // 단, Gitea는 COMMENT 리뷰를 제출해도 requested_reviewers에서 제거하지 않으므로
+  // 승인/변경 요청 없이 코멘트만 남긴 사용자는 commented 상태로 둔다.
   for (const user of requested) {
     if (!user?.login || user.login === authorLogin) continue;
-    entryOf(user).decisive = { state: 'REQUEST_REVIEW', stale: false };
+    const entry = entryOf(user);
+    if (entry.commented && !entry.decisive) continue;
+    entry.decisive = { state: 'REQUEST_REVIEW', stale: false };
   }
 
   return [...entries.values()].map((e) => ({
