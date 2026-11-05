@@ -82,6 +82,16 @@ test('summarizeReviews: requested_reviewers에 있어도 승인 상태를 덮어
   assert.equal(find(out, 'bob').state, 'changes_requested');
 });
 
+test('summarizeReviews: requested_reviewers에 남아 있어도 코멘트만 제출했다면 commented', () => {
+  const out = summarizeReviews({
+    authorLogin: 'me',
+    requested: [user('alice')],
+    reviews: [review(1, 'alice', 'COMMENT')],
+  });
+  assert.equal(out.length, 1);
+  assert.equal(find(out, 'alice').state, 'commented');
+});
+
 test('summarizeReviews: requested_reviewers만 있고 리뷰 행이 없으면 결과에 없다', () => {
   const out = summarizeReviews({ authorLogin: 'me', requested: [user('carol')], reviews: [] });
   assert.deepEqual(out, []);
