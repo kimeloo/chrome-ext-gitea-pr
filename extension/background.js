@@ -1,9 +1,12 @@
 // 서비스 워커: 설치 시 설정 페이지 열기, 알림 폴링 알람 관리, 알림 클릭 처리를 담당한다.
 // 서비스 워커는 언제든 종료될 수 있으므로 모든 리스너를 최상위에서 동기적으로 등록한다.
 
+import { diag, flush as flushDiag, initDiagnostics } from './src/diagnostics.js';
 import { NOTIFY_ALARM, urlFromNotificationId } from './src/notify.js';
 import { runPoll } from './src/poller.js';
 import { loadSettings } from './src/settings.js';
+
+initDiagnostics('background');
 
 // 알림이 켜져 있고 연결 정보가 있을 때만 알람을 유지한다.
 async function syncAlarm() {
@@ -22,6 +25,7 @@ async function syncAlarm() {
 }
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
+  diag.info('onInstalled', { reason, version: chrome.runtime.getManifest().version });
   if (reason === chrome.runtime.OnInstalledReason.INSTALL) chrome.runtime.openOptionsPage();
   syncAlarm();
 });
@@ -48,7 +52,9 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === NOTIFY_ALARM) runPoll();
+  if (alarm.name !== NOTIFY_ALARM) return;
+  diag.info('poll: 알람', { scheduledTime: new Date(alarm.scheduledTime).toISOString() });
+  runPoll().then(flushDiag);
 });
 
 chrome.notifications.onClicked.addListener((id) => {

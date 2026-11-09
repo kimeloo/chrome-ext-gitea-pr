@@ -16,6 +16,12 @@ import { SAMPLE_PRS, sampleCounts } from './src/preview-data.js';
 import { orderedTabs } from './src/dashboard.js';
 import { createTabOrderList } from './src/tab-order.js';
 import { initSideNav } from './src/side-nav.js';
+import { buildReport, clearLogs, diag, initDiagnostics, reportFileName } from './src/diagnostics.js';
+
+initDiagnostics('options');
+
+// 개발자 연락 이메일. 비워 두면 웹 스토어 페이지 링크만 표시한다.
+const SUPPORT_EMAIL = '';
 
 const $ = (id) => document.getElementById(id);
 const el = {
@@ -36,17 +42,29 @@ const el = {
   status: $('status'),
   reset: $('reset'),
   save: $('save'),
+  diagCapture: $('diag-capture'),
+  diagMaskHost: $('diag-mask-host'),
+  diagDownload: $('diag-download'),
+  diagClear: $('diag-clear'),
+  diagStatus: $('diag-status'),
 };
 const themeRadios = [...document.querySelectorAll('input[name="theme"]')];
 const fieldInputs = new Map(); // 항목 key -> 체크박스
 const notifyEventInputs = new Map(); // 알림 이벤트 key -> 체크박스
 let notifyEnabled; // 알림 마스터 스위치 체크박스
 let tabOrderList; // 팝업 탭 순서 목록
+let captureBodies; // 진단 로그 응답 본문 기록 체크박스
 
 const NOTIFY_MASTER = {
   key: 'enabled',
   label: '브라우저 알림 받기',
   hint: '켜면 아래 주기마다 Gitea 서버에 새 소식을 확인합니다. 확인에 실패하면 알리지 않고 다음 주기에 다시 시도합니다.',
+};
+
+const DIAG_CAPTURE = {
+  key: 'captureBodies',
+  label: '응답 본문 기록',
+  hint: '문제를 재현할 때만 켜세요. API 응답 내용(PR 제목, 저장소·사용자 이름 등)이 로그에 함께 저장됩니다. 저장을 눌러야 적용됩니다.',
 };
 
 const STATUS_MS = 2500;
@@ -164,6 +182,7 @@ function setForm(s) {
   for (const [key, input] of fieldInputs) input.checked = Boolean(s.fields[key]);
   tabOrderList.setOrder(s.tabOrder);
   setNotify(s.notify);
+  captureBodies.checked = Boolean(s.diagnostics.captureBodies);
 }
 
 function readForm() {
@@ -178,6 +197,7 @@ function readForm() {
       intervalMinutes: Number(el.notifyInterval.value),
       events: Object.fromEntries(NOTIFY_EVENT_DEFS.map((e) => [e.key, notifyEventInputs.get(e.key).checked])),
     },
+    diagnostics: { captureBodies: captureBodies.checked },
   };
 }
 
@@ -247,6 +267,7 @@ async function checkConnection(s) {
     }
   } catch (err) {
     message = ['error', describeError(err)];
+    diag.warn('options: 연결 확인 실패', err);
   }
   // 더 최근에 시작된 확인이 있으면 이전 결과는 버린다.
   if (seq === connSeq) setConn(...message);
@@ -284,7 +305,15 @@ async function onSave() {
     }
 
     const prev = await loadSettings();
-    next = { baseUrl, token: draft.token, theme: draft.theme, fields: draft.fields, tabOrder: draft.tabOrder, notify: draft.notify };
+    next = {
+      baseUrl,
+      token: draft.token,
+      theme: draft.theme,
+      fields: draft.fields,
+      tabOrder: draft.tabOrder,
+      notify: draft.notify,
+      diagnostics: draft.diagnostics,
+    };
     await saveSettings(next);
 
     if (prev.baseUrl !== next.baseUrl || prev.token !== next.token) {
@@ -313,6 +342,7 @@ function onReset() {
   setTheme(DEFAULT_SETTINGS.theme);
   for (const [key, input] of fieldInputs) input.checked = DEFAULT_SETTINGS.fields[key];
   setNotify(DEFAULT_SETTINGS.notify);
+  captureBodies.checked = DEFAULT_SETTINGS.diagnostics.captureBodies;
   tabOrderList.setOrder(DEFAULT_SETTINGS.tabOrder);
   window.gprApplyTheme(DEFAULT_SETTINGS.theme);
   renderPreview();
@@ -339,6 +369,62 @@ function onToggleToken() {
   el.tokenToggle.setAttribute('aria-pressed', String(reveal));
 }
 
+function buildReportSection() {
+  el.diagCapture.append(
+    buildToggle(DIAG_CAPTURE, 'diag', (input) => {
+      input.id = 'diag-capture-bodies';
+      captureBodies = input;
+    }),
+  );
+  if (SUPPORT_EMAIL) {
+    const link = $('report-email');
+    const subject = encodeURIComponent(`[Gitea PR Status ${chrome.runtime.getManifest().version}] 문제 보고`);
+    link.href = `mailto:${SUPPORT_EMAIL}?subject=${subject}`;
+    link.textContent = SUPPORT_EMAIL;
+    $('report-email-row').hidden = false;
+  }
+}
+
+function setDiagStatus(text, kind = 'info') {
+  el.diagStatus.textContent = text;
+  el.diagStatus.dataset.kind = kind;
+}
+
+// 다운로드 권한 없이 Blob URL과 a[download]로 파일을 저장한다.
+async function onDiagDownload() {
+  el.diagDownload.disabled = true;
+  try {
+    const { settings } = await chrome.storage.local.get('settings');
+    let granted = null;
+    if (settings?.baseUrl) {
+      granted = await chrome.permissions.contains({ origins: [originPattern(settings.baseUrl)] }).catch(() => null);
+    }
+    const text = await buildReport({ maskHost: el.diagMaskHost.checked, granted });
+    const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = reportFileName();
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    setDiagStatus(`${a.download} 파일을 내려받았습니다. 메일에 첨부해 보내 주세요.`, 'ok');
+  } catch (err) {
+    setDiagStatus(`로그를 만들지 못했습니다: ${err.message}`, 'error');
+  } finally {
+    el.diagDownload.disabled = false;
+  }
+}
+
+async function onDiagClear() {
+  try {
+    await clearLogs();
+    setDiagStatus('진단 로그를 지웠습니다.', 'ok');
+  } catch (err) {
+    setDiagStatus(`지우지 못했습니다: ${err.message}`, 'error');
+  }
+}
+
 async function init() {
   // ICONS는 정적 상수이므로 innerHTML로 넣어도 안전하다.
   el.tokenToggle.innerHTML = ICONS.eye;
@@ -347,6 +433,7 @@ async function init() {
 
   buildFieldToggles();
   buildNotifyToggles();
+  buildReportSection();
   tabOrderList = createTabOrderList(el.tabOrder, { order: DEFAULT_SETTINGS.tabOrder, onChange: onTabOrderChange });
 
   const saved = await loadSettings();
@@ -361,6 +448,8 @@ async function init() {
   el.tokenToggle.addEventListener('click', onToggleToken);
   el.reset.addEventListener('click', onReset);
   el.save.addEventListener('click', onSave);
+  el.diagDownload.addEventListener('click', onDiagDownload);
+  el.diagClear.addEventListener('click', onDiagClear);
   el.preview.addEventListener('click', (e) => {
     if (e.target.closest('a')) e.preventDefault();
   });
