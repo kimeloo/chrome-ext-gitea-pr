@@ -1,5 +1,6 @@
 // 탭별 PR 목록을 검색하고, 켜진 표시 항목에 필요한 상세 정보만 추가로 불러온다.
 
+import { diag } from './diagnostics.js';
 import { ApiError, GiteaClient } from './gitea.js';
 import { collectParticipants, summarizeChecks, summarizeReviews, toUser } from './summarize.js';
 
@@ -104,6 +105,11 @@ export async function loadDashboard({ baseUrl, token, fields }, { onSearched } =
     tabs[tab.key] = list;
   });
 
+  diag.info('dashboard: 검색 완료', {
+    counts: Object.fromEntries(TABS.map((t) => [t.key, tabs[t.key].length])),
+    unique: byKey.size,
+    need: requiredResources(fields),
+  });
   onSearched?.({ baseUrl, fetchedAt: Date.now(), tabs, warning: null });
 
   const need = requiredResources(fields);
@@ -115,8 +121,9 @@ export async function loadDashboard({ baseUrl, token, fields }, { onSearched } =
     } catch (err) {
       if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
         permissionDenied = true;
+        diag.warn(`${what} 권한 부족`, err);
       } else {
-        console.warn(`${what} 로드 실패`, err);
+        diag.warn(`${what} 로드 실패`, err);
       }
       return undefined;
     }
