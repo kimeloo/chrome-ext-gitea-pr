@@ -11,7 +11,11 @@
 
 ## 설치
 
-### 릴리즈 파일로 설치 (권장)
+### Chrome 웹 스토어에서 설치 (권장)
+
+[Chrome 웹 스토어의 Gitea PR Status](https://chromewebstore.google.com/detail/gitea-pr-status/kaaloheogmlkfgadkdogpnnoihcemoog)에서 **Chrome에 추가**를 누릅니다. 새 버전은 크롬이 자동으로 업데이트합니다.
+
+### 릴리즈 파일로 설치
 
 1. [Releases](https://github.com/kimeloo/chrome-ext-gitea-pr/releases)에서 최신 `gitea-pr-extension.zip`을 내려받아 압축을 풉니다.
 2. 크롬 주소창에 `chrome://extensions`를 입력해 확장 프로그램 관리 페이지를 열고 오른쪽 위 **개발자 모드**를 켭니다.

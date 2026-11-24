@@ -363,7 +363,7 @@ export function renderTabs(nav, tabs, counts, activeKey, onSelect) {
         tabindex: active ? '0' : '-1',
       },
       tab.label,
-      h('span', { class: 'count' }, String(counts?.[tab.key] ?? 0)),
+      h('span', { class: counts?.[tab.key] ? 'count count-active' : 'count' }, String(counts?.[tab.key] ?? 0)),
     );
     button.addEventListener('click', () => onSelect(tab.key));
     button.addEventListener('keydown', (event) => {

@@ -9,7 +9,7 @@ Gitea PR Status에 관심을 가져 주셔서 감사합니다. 이 문서는 개
 - Chrome Extension Manifest V3, 프레임워크와 빌드 단계 없음
 - 저장소: `chrome.storage.local` (설정, 마지막 조회 결과 캐시, 알림 확인 상태)
 - 테스트: Node.js 18+ (`node:test`)
-- CI/CD: GitHub Actions (`release*` 브랜치 PR이 `main`에 머지되면 GitHub Release 생성)
+- CI/CD: GitHub Actions (`release*` 브랜치 PR이 `main`에 머지되면 GitHub Release 생성 후 Chrome 웹 스토어에 심사 제출)
 
 ## 디렉토리 구조
 
@@ -94,7 +94,23 @@ Gitea 알림함을 기준으로 하며, 이미 읽은 알림과 본인이 한 �
 2. `extension/manifest.json`의 `version`을 `x.y.z`로 올리고, `CHANGELOG.md`의 `## [Unreleased]` 아래에 `## [x.y.z] - YYYY-MM-DD` 섹션을 작성합니다.
 3. PR의 대상 브랜치를 `main`으로 지정하고 머지합니다.
 4. 머지되면 `.github/workflows/release.yml`이 테스트를 실행한 뒤 태그 `vx.y.z`로 GitHub Release를 만들고 `gitea-pr-extension.zip`을 첨부합니다. 사용자는 이 ZIP 파일을 내려받아 압축을 푼 뒤 크롬 확장 관리 페이지(`chrome://extensions`)에서 **압축해제된 확장 프로그램을 로드합니다**를 눌러 수동 설치할 수 있습니다. 릴리즈 본문은 `CHANGELOG.md`의 해당 버전 섹션입니다.
-5. [개발자 대시보드](https://chrome.google.com/webstore/devconsole)에서 ZIP을 업로드하고 `store/listing.md`의 내용을 붙여 넣어 심사를 제출합니다. 스토어 업로드는 수동입니다.
+5. 같은 워크플로의 `publish-store` 작업이 ZIP을 Chrome 웹 스토어에 업로드하고 심사를 제출합니다. 심사는 Google이 진행하며, 승인되면 자동으로 게시됩니다. 제출 결과는 [개발자 대시보드](https://chrome.google.com/webstore/devconsole)에서 확인합니다.
+
+### 스토어 제출 자동화 설정 (최초 1회)
+
+아래 값을 저장소의 **Settings → Secrets and variables → Actions**에 등록합니다. 하나라도 없으면 제출 단계는 경고만 남기고 건너뛰므로, 이 경우 개발자 대시보드에서 ZIP을 직접 업로드합니다.
+
+| Secret | 값 |
+|---|---|
+| `CWS_EXTENSION_ID` | 개발자 대시보드의 확장 프로그램 ID |
+| `CWS_PUBLISHER_ID` | 개발자 대시보드 계정의 게시자 ID (Chrome Web Store API v2에서 필요) |
+| `CWS_CLIENT_ID` | Google Cloud OAuth 클라이언트 ID |
+| `CWS_CLIENT_SECRET` | Google Cloud OAuth 클라이언트 보안 비밀 |
+| `CWS_REFRESH_TOKEN` | 개발자 계정으로 발급한 OAuth 리프레시 토큰 |
+
+발급 절차는 [chrome-webstore-upload-cli 안내](https://github.com/fregante/chrome-webstore-upload-keys)를 따릅니다. 요약하면 Google Cloud 프로젝트에서 Chrome Web Store API를 켜고, 데스크톱 앱 유형의 OAuth 클라이언트를 만든 뒤 리프레시 토큰을 발급합니다.
+
+자동화되지 않는 항목: 스토어 설명, 스크린샷, 개인정보 관행 탭은 API로 수정할 수 없으므로 `store/listing.md`가 바뀌면 대시보드에서 직접 반영합니다. 제출이 실패하면 Actions에서 `publish-store` 작업만 다시 실행할 수 있습니다.
 
 스토어 스크린샷은 1280×800, 프로모션 타일은 440×280입니다.
 

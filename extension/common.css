@@ -223,9 +223,11 @@ svg.spinning {
 }
 
 .tab[aria-selected="true"] {
-  border-bottom-color: var(--accent);
+  border-bottom: 3px solid var(--accent);
+  padding-bottom: 6px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg));
   color: var(--text);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .count {
@@ -242,7 +244,12 @@ svg.spinning {
   font-variant-numeric: tabular-nums;
 }
 
-.tab[aria-selected="true"] .count {
+.count-active {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.tab[aria-selected="true"] .count:not(.count-active) {
   background: color-mix(in srgb, var(--accent) 24%, transparent);
   color: var(--text);
 }

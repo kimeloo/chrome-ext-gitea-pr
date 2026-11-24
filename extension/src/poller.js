@@ -2,6 +2,7 @@
 // 상태(notifyState)는 chrome.storage.local에 보관하며, 확인에 실패하면 알리지 않고 다음 주기에 다시 시도한다.
 
 import { mapLimit } from './dashboard.js';
+import { diag } from './diagnostics.js';
 import { GiteaClient } from './gitea.js';
 import {
   buildNotifications,
@@ -30,7 +31,7 @@ let inFlight = null;
 // 동시에 여러 번 호출되어도 진행 중인 확인 하나를 공유한다. 실패는 로그만 남기고 던지지 않는다.
 export function runPoll() {
   inFlight ??= poll()
-    .catch((err) => console.warn('[Gitea PR Status] 알림 확인 실패', err))
+    .catch((err) => diag.warn('알림 확인 실패', err))
     .finally(() => {
       inFlight = null;
     });
@@ -49,7 +50,7 @@ async function collectChecks(client, prevMap, { detectTransitions }) {
   try {
     mine = await client.searchPulls('created');
   } catch (err) {
-    console.warn('[Gitea PR Status] 내 PR 목록 조회 실패', err);
+    diag.warn('내 PR 목록 조회 실패', err);
     return { map: prevMap, entries, failed: true };
   }
 
@@ -77,7 +78,7 @@ async function collectChecks(client, prevMap, { detectTransitions }) {
       });
     } catch (err) {
       failed = true;
-      console.warn(`[Gitea PR Status] 체크 상태 조회 실패: ${prKey}`, err);
+      diag.warn(`체크 상태 조회 실패: ${prKey}`, err);
       if (prevMap[prKey]) map[prKey] = prevMap[prKey];
     }
   });
@@ -115,7 +116,10 @@ async function poll() {
   const settings = await loadSettings();
   const { baseUrl, token, notify } = settings;
   if (!notify.enabled || !baseUrl || !token) return;
-  if (!(await chrome.permissions.contains({ origins: [originPattern(baseUrl)] }))) return;
+  if (!(await chrome.permissions.contains({ origins: [originPattern(baseUrl)] }))) {
+    diag.warn('poll: 사이트 접근 권한 없음');
+    return;
+  }
 
   const client = new GiteaClient(baseUrl, token);
   const { notifyState: state } = await chrome.storage.local.get('notifyState');
@@ -137,6 +141,7 @@ async function poll() {
         checksReady: Boolean(checksResult && !checksResult.failed),
       },
     });
+    diag.info('poll: 기준선 설정', { checksTracked: Object.keys(checksResult?.map ?? {}).length, checksFailed: checksResult?.failed });
     return;
   }
 
@@ -161,7 +166,7 @@ async function poll() {
         for (const event of events) candidates.push({ pr, event });
       } catch (err) {
         failed = true;
-        console.warn('[Gitea PR Status] 알림 스레드 조회 실패', err);
+        diag.warn('알림 스레드 조회 실패', err);
       }
     });
   }
@@ -191,6 +196,14 @@ async function poll() {
   }
 
   const specs = buildNotifications([...groups.values()], { baseUrl });
+  diag.info('poll: 완료', {
+    threads: threads.length,
+    candidates: candidates.length,
+    emitted: emittedKeys.length,
+    notifications: specs.length,
+    failed,
+    events: candidates.map(({ pr, event }) => ({ pr: pr.key, kind: event.kind, key: event.key, skipped: !emittedKeys.includes(event.key) })).slice(0, 50),
+  });
   for (const [i, spec] of specs.entries()) {
     try {
       await chrome.notifications.create(notificationId(spec.url, i), {
@@ -202,7 +215,7 @@ async function poll() {
         priority: 0,
       });
     } catch (err) {
-      console.warn('[Gitea PR Status] 알림 표시 실패', err);
+      diag.warn('알림 표시 실패', err);
     }
   }
 
