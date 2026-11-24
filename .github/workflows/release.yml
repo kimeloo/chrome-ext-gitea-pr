@@ -2,6 +2,8 @@ name: Release
 
 # release로 시작하는 브랜치의 PR이 main에 머지되면 manifest.json의 버전으로 GitHub Release를 만들고
 # 수동 설치용 gitea-pr-extension.zip을 첨부한다.
+# 이어서 같은 ZIP을 Chrome 웹 스토어에 업로드하고 심사를 제출한다. 승인되면 자동으로 게시된다.
+# 스토어 인증 정보(Secrets)가 없으면 제출 단계는 건너뛴다.
 on:
   pull_request:
     types: [closed]
@@ -17,6 +19,8 @@ jobs:
   release:
     if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && startsWith(github.event.pull_request.head.ref, 'release')
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -76,3 +80,47 @@ jobs:
             --title "v${VERSION}" \
             --notes-file release-notes.md \
             dist/gitea-pr-extension.zip
+
+  # 릴리즈 단계와 분리해 두어, 스토어 제출만 실패해도 이 작업만 다시 실행할 수 있다.
+  publish-store:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check store credentials
+        id: credentials
+        env:
+          EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+          PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+          CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+        run: |
+          if [ -z "$EXTENSION_ID" ] || [ -z "$PUBLISHER_ID" ] || [ -z "$CLIENT_ID" ] || [ -z "$CLIENT_SECRET" ] || [ -z "$REFRESH_TOKEN" ]; then
+            echo "::warning::CWS_* Secrets가 설정되지 않아 Chrome 웹 스토어 제출을 건너뜁니다. 개발자 대시보드에서 직접 제출하세요."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download release package
+        if: steps.credentials.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: gh release download "v${VERSION}" --repo "$GITHUB_REPOSITORY" --pattern gitea-pr-extension.zip
+
+      - uses: actions/setup-node@v4
+        if: steps.credentials.outputs.ready == 'true'
+        with:
+          node-version: 20
+
+      # 명령을 생략하면 업로드 후 심사를 제출한다. 승인되면 별도 조작 없이 게시된다.
+      - name: Upload and submit for review
+        if: steps.credentials.outputs.ready == 'true'
+        env:
+          EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+          PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+          CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+        run: npx --yes chrome-webstore-upload-cli@4 --source gitea-pr-extension.zip
