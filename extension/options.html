@@ -26,6 +26,7 @@
           <li><a class="side-nav-link" href="#sec-notify">알림</a></li>
           <li><a class="side-nav-link" href="#sec-tab-order">탭 순서</a></li>
           <li><a class="side-nav-link" href="#sec-fields">표시 항목</a></li>
+          <li><a class="side-nav-link" href="#sec-report">문제 보고</a></li>
         </ol>
       </nav>
 
@@ -97,6 +98,40 @@
           <h2 id="h-fields">표시 항목</h2>
           <div id="field-groups"></div>
           <p class="note">PR 번호와 제목은 항상 표시됩니다.</p>
+        </section>
+
+        <section id="sec-report" class="panel" aria-labelledby="h-report">
+          <h2 id="h-report">문제 보고</h2>
+          <p class="hint">이상한 동작을 발견하면 진단 로그 파일을 내려받아 메일에 첨부해 보내 주세요. 로그는 이 브라우저에만 저장되며(최근 7일), 직접 내려받아 보내기 전에는 어디로도 전송되지 않습니다.</p>
+
+          <div id="diag-capture" class="report-toggle"></div>
+
+          <label class="check">
+            <input id="diag-mask-host" type="checkbox" checked>
+            <span>내려받을 파일에서 Gitea 서버 주소 가리기</span>
+          </label>
+
+          <div class="report-actions">
+            <button id="diag-download" type="button" class="btn btn-primary">진단 로그 내려받기</button>
+            <button id="diag-clear" type="button" class="btn btn-secondary">로그 지우기</button>
+            <span id="diag-status" class="diag-status" role="status" aria-live="polite"></span>
+          </div>
+
+          <details class="report-details">
+            <summary>파일에 포함되는 내용</summary>
+            <ul>
+              <li>확장 프로그램 버전, 브라우저 정보(User-Agent), 언어, 시간대</li>
+              <li>설정값(토큰은 설정 여부와 길이만), 캐시·알림 상태 요약(개수와 시각)</li>
+              <li>Gitea API 요청 주소·응답 코드·소요 시간, 오류 메시지와 내부 처리 기록</li>
+              <li>'응답 본문 기록'을 켠 경우에만: API 응답 내용(PR 제목, 저장소·사용자 이름 등). 이메일·토큰처럼 보이는 항목은 가려집니다.</li>
+            </ul>
+            <p>보내기 전에 파일을 텍스트 편집기로 열어 내용을 확인하고, 원하지 않는 부분은 지워도 됩니다.</p>
+          </details>
+
+          <div class="note notes">
+            <p>보낼 곳: <a id="report-store-link" href="https://chromewebstore.google.com/detail/kaaloheogmlkfgadkdogpnnoihcemoog" target="_blank" rel="noopener noreferrer">Chrome 웹 스토어 페이지</a>의 개발자 연락처(이메일)로 보내 주세요. <span id="report-email-row" hidden>또는 <a id="report-email" href="#"></a></span></p>
+            <p>공개해도 괜찮은 내용이라면 <a href="https://github.com/kimeloo/chrome-ext-gitea-pr/issues" target="_blank" rel="noopener noreferrer">GitHub Issues</a>에 올려도 됩니다. 이 경우 로그가 공개되므로 주소 가리기를 켜고 본문 기록은 꺼 두세요.</p>
+          </div>
         </section>
       </div>
 

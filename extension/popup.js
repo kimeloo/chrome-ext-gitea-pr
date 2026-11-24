@@ -1,8 +1,11 @@
+import { diag, initDiagnostics } from './src/diagnostics.js';
 import { loadSettings, originPattern } from './src/settings.js';
 import { describeError } from './src/gitea.js';
 import { orderedTabs, loadDashboard } from './src/dashboard.js';
 import { renderTabs, renderList, renderSkeleton, formatRelative } from './src/render.js';
 import { ICONS } from './src/icons.js';
+
+initDiagnostics('popup');
 
 const $ = (id) => document.getElementById(id);
 const el = {
@@ -114,8 +117,9 @@ async function refresh() {
     data = result;
     renderBody();
     if (result.warning) showBanner('warning', result.warning);
-    await chrome.storage.local.set({ cache: result }).catch((err) => console.warn('캐시 저장 실패', err));
+    await chrome.storage.local.set({ cache: result }).catch((err) => diag.warn('캐시 저장 실패', err));
   } catch (err) {
+    diag.warn('popup: 새로고침 실패', err);
     const suffix = data ? ' 마지막으로 불러온 데이터를 표시합니다.' : '';
     showBanner('error', describeError(err) + suffix);
     if (!data) el.list.replaceChildren();

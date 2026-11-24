@@ -1,5 +1,7 @@
 // Gitea REST API 클라이언트. status 0은 네트워크 오류 또는 타임아웃을 뜻한다.
 
+import { diag } from './diagnostics.js';
+
 const PAGE_SIZE = 50;
 const MAX_PAGES = 4;
 const TIMEOUT_MS = 15000;
@@ -22,6 +24,9 @@ export class GiteaClient {
   async request(path, params = {}) {
     const query = new URLSearchParams(params).toString();
     const url = `${this.baseUrl}/api/v1${path}${query ? `?${query}` : ''}`;
+    const started = Date.now();
+    // 진단 로그: 요청 헤더(토큰)는 기록하지 않는다.
+    const log = (fields, body) => diag.api({ url, ms: Date.now() - started, ...fields }, body);
     let res;
     try {
       res = await fetch(url, {
@@ -30,17 +35,25 @@ export class GiteaClient {
         cache: 'no-store',
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
-    } catch {
+    } catch (err) {
+      log({ ok: false, status: 0, error: `${err?.name ?? 'Error'}: ${err?.message ?? err}` });
       throw new ApiError(0, url);
     }
-    if (!res.ok) throw new ApiError(res.status, url);
+    if (!res.ok) {
+      // 오류 응답의 메시지는 원인 파악에 유용하므로 앞부분만 남긴다.
+      const text = await res.text().catch(() => '');
+      log({ ok: false, status: res.status, errorBody: text.slice(0, 500) });
+      throw new ApiError(res.status, url);
+    }
     let data;
     try {
       // 본문 수신 중 타임아웃이나 JSON이 아닌 응답도 연결 실패로 취급한다.
       data = await res.json();
-    } catch {
+    } catch (err) {
+      log({ ok: false, status: res.status, error: `invalid body: ${err?.name ?? 'Error'}`, contentType: res.headers.get('Content-Type') });
       throw new ApiError(0, url);
     }
+    log({ ok: true, status: res.status, total: res.headers.get('X-Total-Count'), items: Array.isArray(data) ? data.length : undefined }, data);
     return { data, headers: res.headers };
   }
 

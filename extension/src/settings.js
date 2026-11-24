@@ -59,6 +59,10 @@ export const DEFAULT_SETTINGS = {
     intervalMinutes: DEFAULT_NOTIFY_INTERVAL,
     events: Object.fromEntries(NOTIFY_EVENT_DEFS.map((e) => [e.key, true])),
   },
+  // 문제 보고용 진단 로그. 응답 본문 기록은 사용자가 켰을 때만 한다.
+  diagnostics: {
+    captureBodies: false,
+  },
 };
 
 export async function loadSettings() {
@@ -76,6 +80,7 @@ export async function loadSettings() {
     fields: { ...DEFAULT_SETTINGS.fields, ...settings?.fields },
     tabOrder: normalizeTabOrder(settings?.tabOrder),
     notify,
+    diagnostics: { ...DEFAULT_SETTINGS.diagnostics, ...settings?.diagnostics },
   };
 }
 
