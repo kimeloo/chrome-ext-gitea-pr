@@ -57,7 +57,7 @@ function fromIssue(issue) {
 function requiredResources(fields) {
   return {
     pull: Boolean(
-      fields.baseBranch || fields.headBranch || fields.reviewers || fields.reviewStatus
+      fields.baseBranch || fields.headBranch
         || fields.checks || fields.mergeable || fields.diffStat || fields.comments,
     ),
     reviews: Boolean(fields.reviewers || fields.reviewStatus || fields.participants),
@@ -151,13 +151,9 @@ export async function loadDashboard({ baseUrl, token, fields }, { onSearched } =
       pr.draft = pull.draft ?? pr.draft;
     }
 
-    // pull과 reviews 중 하나라도 성공했을 때만 리뷰어를 계산한다.
-    if ((fields.reviewers || fields.reviewStatus) && (pull || reviews)) {
-      pr.reviewers = summarizeReviews({
-        authorLogin: pr.author?.login,
-        requested: pull?.requested_reviewers ?? [],
-        reviews: reviews ?? [],
-      });
+    // 리뷰어 상태는 reviews만으로 정한다. pull의 requested_reviewers는 승인한 사람도 담아 쓸 수 없다.
+    if ((fields.reviewers || fields.reviewStatus) && reviews) {
+      pr.reviewers = summarizeReviews({ authorLogin: pr.author?.login, reviews });
     }
 
     // 커밋 상태 조회에는 pull에서 얻은 head sha가 필요하다.
