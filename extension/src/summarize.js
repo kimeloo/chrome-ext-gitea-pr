@@ -10,8 +10,11 @@ const REVIEW_STATE_MAP = {
   REQUEST_REVIEW: 'pending',
 };
 
-// Gitea 사이드바의 리뷰어 표시와 같은 규칙으로 사용자별 최종 리뷰 상태를 계산한다.
-export function summarizeReviews({ authorLogin, requested = [], reviews = [] }) {
+// 사용자별 최종 리뷰 상태를 /reviews 목록만으로 계산한다.
+// 리뷰 요청도 REQUEST_REVIEW 타입의 리뷰 행이고, 사용자가 리뷰를 제출하면 Gitea가 그 사용자의 요청 행을 지운다.
+// 재요청은 id가 더 큰 새 행이 되므로, id 오름차순 마지막 결정 행이 곧 현재 상태다.
+// pull의 requested_reviewers는 승인·변경 요청한 사람도 담으므로 상태 판단에 쓰지 않는다.
+export function summarizeReviews({ authorLogin, reviews = [] }) {
   const entries = new Map();
   const entryOf = (user) => {
     let entry = entries.get(user.login);
@@ -31,12 +34,6 @@ export function summarizeReviews({ authorLogin, requested = [], reviews = [] }) 
     } else if (r.state === 'COMMENT') {
       entryOf(r.user).commented = true;
     }
-  }
-
-  // 현재 대기 중인 리뷰 요청이 과거 리뷰보다 우선한다.
-  for (const user of requested) {
-    if (!user?.login || user.login === authorLogin) continue;
-    entryOf(user).decisive = { state: 'REQUEST_REVIEW', stale: false };
   }
 
   return [...entries.values()].map((e) => ({

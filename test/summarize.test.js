@@ -63,29 +63,44 @@ test('summarizeReviews: dismissed 승인만 있는 사용자는 결과에 없다
   assert.deepEqual(out, []);
 });
 
-test('summarizeReviews: requested에만 있는 사용자는 pending', () => {
-  const out = summarizeReviews({ authorLogin: 'me', requested: [user('carol')], reviews: [] });
+test('summarizeReviews: REQUEST_REVIEW 행만 있는 사용자는 pending', () => {
+  const out = summarizeReviews({ authorLogin: 'me', reviews: [review(1, 'carol', 'REQUEST_REVIEW')] });
   assert.equal(out.length, 1);
   assert.equal(find(out, 'carol').state, 'pending');
   assert.equal(find(out, 'carol').stale, false);
   assert.equal(find(out, 'carol').avatarUrl, 'https://img.example/carol.png');
 });
 
-test('summarizeReviews: 대기 중인 요청이 과거 승인을 덮어쓴다', () => {
+// Gitea의 requested_reviewers는 승인한 사람도 담는다. 상태 판단에 쓰면 안 된다.
+test('summarizeReviews: requested_reviewers에 있어도 승인 상태를 덮어쓰지 않는다', () => {
+  const out = summarizeReviews({
+    authorLogin: 'me',
+    requested: [user('alice'), user('bob')],
+    reviews: [review(1, 'alice', 'APPROVED'), review(2, 'bob', 'REQUEST_CHANGES')],
+  });
+  assert.equal(find(out, 'alice').state, 'approved');
+  assert.equal(find(out, 'bob').state, 'changes_requested');
+});
+
+test('summarizeReviews: requested_reviewers에 남아 있어도 코멘트만 제출했다면 commented', () => {
   const out = summarizeReviews({
     authorLogin: 'me',
     requested: [user('alice')],
-    reviews: [review(1, 'alice', 'APPROVED', { stale: true })],
+    reviews: [review(1, 'alice', 'COMMENT')],
   });
-  assert.equal(find(out, 'alice').state, 'pending');
-  assert.equal(find(out, 'alice').stale, false);
+  assert.equal(out.length, 1);
+  assert.equal(find(out, 'alice').state, 'commented');
 });
 
-test('summarizeReviews: 작성자 본인의 리뷰와 요청은 제외', () => {
+test('summarizeReviews: requested_reviewers만 있고 리뷰 행이 없으면 결과에 없다', () => {
+  const out = summarizeReviews({ authorLogin: 'me', requested: [user('carol')], reviews: [] });
+  assert.deepEqual(out, []);
+});
+
+test('summarizeReviews: 작성자 본인의 리뷰는 제외', () => {
   const out = summarizeReviews({
     authorLogin: 'me',
-    requested: [user('me')],
-    reviews: [review(1, 'me', 'COMMENT')],
+    reviews: [review(1, 'me', 'COMMENT'), review(2, 'me', 'REQUEST_REVIEW')],
   });
   assert.deepEqual(out, []);
 });
@@ -110,8 +125,7 @@ test('summarizeReviews: 코멘트만 남긴 사용자는 commented, PENDING은 �
 test('summarizeReviews: 결과 순서는 엔트리 최초 생성 순서', () => {
   const out = summarizeReviews({
     authorLogin: 'me',
-    requested: [user('zed')],
-    reviews: [review(1, 'bob', 'APPROVED'), review(2, 'alice', 'REQUEST_CHANGES')],
+    reviews: [review(1, 'bob', 'APPROVED'), review(2, 'alice', 'REQUEST_CHANGES'), review(3, 'zed', 'REQUEST_REVIEW')],
   });
   assert.deepEqual(out.map((r) => r.login), ['bob', 'alice', 'zed']);
 });
