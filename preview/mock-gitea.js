@@ -299,7 +299,8 @@ function pullJson(pr, base) {
     deletions: pr.deletions,
     changed_files: pr.changed_files,
     review_comments: pr.review_comments,
-    requested_reviewers: pr.requested.map(userOf),
+    // 실제 Gitea는 대기 중인 요청자만이 아니라 승인·변경 요청·요청 행이 있는 모든 리뷰 관여자를 담는다.
+    requested_reviewers: [...new Set(pr.reviews.filter((r) => r.state !== 'PENDING' && r.state !== 'COMMENT').map((r) => r.user))].map(userOf),
     created_at: pr.created_at,
     updated_at: pr.updated_at,
   };
@@ -430,8 +431,8 @@ function makeOps(nextId) {
     review(pr, user, state, at, stale = false) {
       const id = nextId();
       pr.reviews.push({ id, user, state, stale, submitted_at: at });
-      // 임시 저장 리뷰는 타임라인에 나타나지 않는다.
-      if (state !== 'PENDING') timelineItem(pr, 'review', user, at, { id });
+      // 임시 저장 리뷰와 리뷰 요청 행은 타임라인에 리뷰로 나타나지 않는다.
+      if (state !== 'PENDING' && state !== 'REQUEST_REVIEW') timelineItem(pr, 'review', user, at, { id });
     },
     statuses: (list) => list.map(([context, status, description]) => ({ id: nextId(), context, status, description })),
   };
@@ -490,6 +491,8 @@ function buildDataset(now, nextId, ops) {
     [...(def.reviews ?? [])].sort(byAgeDesc).forEach(([user, state, stale, minutesAgo]) => {
       ops.review(pr, user, state, iso(minutesAgo), stale);
     });
+    // 실제 Gitea처럼 리뷰 요청은 REQUEST_REVIEW 리뷰 행이다. 기존 리뷰보다 id가 커서 재요청이 된다.
+    for (const user of pr.requested) ops.review(pr, user, 'REQUEST_REVIEW', iso(0));
     if (pr.state === 'merged') ops.timelineItem(pr, 'merge_pull', def.closedBy, pr.updated_at);
     if (pr.state === 'closed') ops.timelineItem(pr, 'close', def.closedBy, pr.updated_at);
     pr.timeline.sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at) || a.id - b.id);
@@ -720,6 +723,8 @@ export function createMockGitea({ load, save } = {}) {
 
   function review(pr, actor, at, reviewState, text) {
     if (actor === pr.author) return result(false, `${actor}님은 이 PR의 작성자라서 ${text}할 수 없습니다.`);
+    // 리뷰를 제출하면 Gitea가 그 사용자의 요청 행을 지운다.
+    pr.reviews = pr.reviews.filter((r) => !(r.user === actor && r.state === 'REQUEST_REVIEW'));
     ops.review(pr, actor, reviewState, at);
     pr.requested = pr.requested.filter((login) => login !== actor);
     touch(pr, at);
@@ -773,7 +778,10 @@ export function createMockGitea({ load, save } = {}) {
 
     reviewRequested(pr, actor, at) {
       if (pr.author === ME) return result(false, '내가 연 PR에는 나를 리뷰어로 지정할 수 없습니다.');
-      if (!pr.requested.includes(ME)) pr.requested.push(ME);
+      if (!pr.requested.includes(ME)) {
+        pr.requested.push(ME);
+        ops.review(pr, ME, 'REQUEST_REVIEW', at);
+      }
       ops.timelineItem(pr, 'review_request', actor, at, { assignee: ME });
       touch(pr, at);
       return result(true, `${actor}님이 ${prLabel(pr)}에서 나를 리뷰어로 지정했습니다.`);
