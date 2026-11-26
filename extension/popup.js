@@ -30,6 +30,26 @@ let activeKey = tabs[0].key; // 사용자가 정한 순서의 첫 탭으로 연�
 let data = null; // 현재 화면에 표시 중인 데이터(캐시 포함)
 let loading = false;
 
+// 탭별 스크롤 위치를 기억한다. 첫 렌더에서 한 번만 복원하고, 그 전에는 저장하지 않아 0으로 덮어쓰지 않는다.
+const { popupScroll } = await chrome.storage.local.get('popupScroll');
+const scrollPositions = { ...popupScroll };
+let scrollRestored = false;
+let scrollTimer = null;
+
+function saveScroll() {
+  clearTimeout(scrollTimer);
+  if (!scrollRestored) return;
+  scrollPositions[activeKey] = el.list.scrollTop;
+  chrome.storage.local.set({ popupScroll: scrollPositions }).catch((err) => diag.warn('스크롤 위치 저장 실패', err));
+}
+
+el.list.addEventListener('scroll', () => {
+  clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(saveScroll, 200);
+});
+// 팝업은 포커스를 잃으면 바로 닫히므로 디바운스를 기다리지 않고 저장한다.
+window.addEventListener('pagehide', saveScroll);
+
 function openSettings() {
   chrome.runtime.openOptionsPage();
   window.close();
@@ -84,18 +104,20 @@ function setUpdated() {
 function renderBody() {
   const counts = Object.fromEntries(tabs.map((t) => [t.key, data.tabs[t.key]?.length ?? 0]));
   const tab = tabs.find((t) => t.key === activeKey);
-  const scrollTop = el.list.scrollTop;
+  const scrollTop = scrollRestored ? el.list.scrollTop : (scrollPositions[activeKey] ?? 0);
   el.tabs.hidden = false;
   renderTabs(el.tabs, tabs, counts, activeKey, selectTab);
   renderList(el.list, data.tabs[activeKey] ?? [], settings.fields, { emptyText: tab.empty });
   el.list.scrollTop = scrollTop;
+  scrollRestored = true;
 }
 
 function selectTab(key) {
   if (key === activeKey || !data) return;
+  saveScroll();
   activeKey = key;
   renderBody();
-  el.list.scrollTop = 0;
+  el.list.scrollTop = scrollPositions[key] ?? 0;
 }
 
 async function refresh() {
