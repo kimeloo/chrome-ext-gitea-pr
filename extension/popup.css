@@ -1,12 +1,27 @@
 /* 팝업 페이지 레이아웃. 공통 컴포넌트 스타일은 common.css에 있다. */
+/* Chrome 팝업은 높이가 600px를 넘으면 바깥에 스크롤바를 만든다.
+   본문 높이를 그 안으로 제한하고 목록 영역만 스크롤시킨다. */
+html {
+  overflow: hidden;
+}
+
 body {
+  display: flex;
+  flex-direction: column;
   width: 440px;
+  max-height: 600px;
   margin: 0;
   background: var(--bg);
 }
 
+.bar,
+.tabs,
+.banner {
+  flex: none;
+}
+
 #list {
-  max-height: 520px;
+  flex: 1 1 auto;
   min-height: 96px;
   overflow-y: auto;
   overscroll-behavior: contain;
