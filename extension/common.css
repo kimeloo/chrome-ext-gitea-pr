@@ -617,7 +617,7 @@ img.avatar {
   margin-left: -6px;
 }
 
-/* 행 E: 라벨·마일스톤 */
+/* 행 E: 라벨·마일스톤 … 댓글 수 */
 .row-tags {
   flex-wrap: nowrap;
   align-items: flex-start;
@@ -632,7 +632,13 @@ img.avatar {
   min-width: 0;
 }
 
-/* 행 F: 댓글 수 · 생성 · 최근 업데이트 · 마감일 */
+.row-tags .comment-count {
+  flex: none;
+  min-height: 18px;
+  margin-left: auto;
+}
+
+/* 행 F: 생성 · 최근 업데이트 · 마감일 */
 .row-dates {
   gap: 4px 10px;
   color: var(--muted);
