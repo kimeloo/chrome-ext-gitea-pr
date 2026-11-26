@@ -127,6 +127,11 @@ button {
   color: var(--text);
 }
 
+.icon-btn[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--text);
+}
+
 .icon-btn:disabled {
   opacity: 0.5;
   cursor: default;

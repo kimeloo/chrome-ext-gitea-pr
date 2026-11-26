@@ -10,6 +10,7 @@ initDiagnostics('popup');
 const $ = (id) => document.getElementById(id);
 const el = {
   updated: $('updated'),
+  compact: $('compact'),
   refresh: $('refresh'),
   openSettings: $('open-settings'),
   tabs: $('tabs'),
@@ -18,6 +19,7 @@ const el = {
 };
 
 // ICONS는 정적 상수이므로 innerHTML로 넣어도 안전하다.
+el.compact.innerHTML = ICONS.rows;
 el.refresh.innerHTML = ICONS.sync;
 el.openSettings.innerHTML = ICONS.gear;
 
@@ -29,6 +31,23 @@ const tabs = orderedTabs(settings.tabOrder);
 let activeKey = tabs[0].key; // 사용자가 정한 순서의 첫 탭으로 연다.
 let data = null; // 현재 화면에 표시 중인 데이터(캐시 포함)
 let loading = false;
+
+// 간단히 보기는 사용자가 직접 켜고 끈 상태만 기억한다. 자동으로 켜지지 않는다.
+function setCompact(on) {
+  document.body.classList.toggle('compact', on);
+  el.compact.setAttribute('aria-pressed', String(on));
+  el.compact.title = on ? '자세히 보기' : '간단히 보기';
+  el.compact.setAttribute('aria-label', el.compact.title);
+}
+
+const { popupCompact } = await chrome.storage.local.get('popupCompact');
+setCompact(popupCompact === true);
+
+el.compact.addEventListener('click', () => {
+  const on = !document.body.classList.contains('compact');
+  setCompact(on);
+  chrome.storage.local.set({ popupCompact: on }).catch((err) => diag.warn('간단히 보기 저장 실패', err));
+});
 
 function openSettings() {
   chrome.runtime.openOptionsPage();
