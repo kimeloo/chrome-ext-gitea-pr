@@ -301,7 +301,7 @@ function diffStat(pr) {
   );
 }
 
-// 행 E: 라벨·마일스톤 … 댓글 수
+// 행 E: 라벨·마일스톤
 function tagsRow(pr, f) {
   const tags = [
     f.reviewStatus && !f.reviewers && pr.reviewers ? reviewSummary(pr.reviewers) : null,
@@ -317,20 +317,17 @@ function tagsRow(pr, f) {
   ]
     .flat()
     .filter(Boolean);
-  return row(
-    'row-tags',
-    tags.length ? h('span', { class: 'tags' }, tags) : null,
-    f.comments ? commentChip(pr) : null,
-  );
+  return row('row-tags', tags.length ? h('span', { class: 'tags' }, tags) : null);
 }
 
-// 행 F: 생성 · 최근 업데이트 · 마감일
+// 행 F: 생성 · 최근 업데이트 · 마감일 … 댓글 수
 function datesRow(pr, f, now) {
   return row(
     'row-dates',
     f.createdAt ? timeChip('created', '생성', pr.createdAt, now) : null,
     f.updatedAt ? timeChip('updated', '업데이트', pr.updatedAt, now) : null,
     f.dueDate && pr.dueDate ? dueChip(pr.dueDate, now) : null,
+    f.comments ? commentChip(pr) : null,
   );
 }
 
