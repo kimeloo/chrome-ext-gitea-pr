@@ -127,6 +127,11 @@ button {
   color: var(--text);
 }
 
+.icon-btn[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--text);
+}
+
 .icon-btn:disabled {
   opacity: 0.5;
   cursor: default;
@@ -617,7 +622,7 @@ img.avatar {
   margin-left: -6px;
 }
 
-/* 행 E: 라벨·마일스톤 … 댓글 수 */
+/* 행 E: 라벨·마일스톤 */
 .row-tags {
   flex-wrap: nowrap;
   align-items: flex-start;
@@ -632,16 +637,16 @@ img.avatar {
   min-width: 0;
 }
 
-.row-tags .comment-count {
-  flex: none;
-  min-height: 18px;
-  margin-left: auto;
-}
-
-/* 행 F: 생성 · 최근 업데이트 · 마감일 */
+/* 행 F: 생성 · 최근 업데이트 · 마감일 … 댓글 수 */
 .row-dates {
   gap: 4px 10px;
   color: var(--muted);
+}
+
+.row-dates .comment-count {
+  flex: none;
+  min-height: 18px;
+  margin-left: auto;
 }
 
 .chip {
