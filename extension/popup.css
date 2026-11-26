@@ -15,3 +15,15 @@ body {
 #refresh:disabled {
   cursor: progress;
 }
+
+/* 간단히 보기: 메타 정보 줄을 숨겨 한 화면에 더 많은 PR을 보여 준다. 리뷰어는 유지한다. */
+.compact .row-branches,
+.compact .row-tags,
+.compact .row-dates {
+  display: none;
+}
+
+.compact .pr-card {
+  gap: 3px;
+  padding: 7px 12px;
+}
