@@ -10,6 +10,7 @@ initDiagnostics('popup');
 const $ = (id) => document.getElementById(id);
 const el = {
   updated: $('updated'),
+  compact: $('compact'),
   refresh: $('refresh'),
   openSettings: $('open-settings'),
   tabs: $('tabs'),
@@ -18,6 +19,7 @@ const el = {
 };
 
 // ICONS는 정적 상수이므로 innerHTML로 넣어도 안전하다.
+el.compact.innerHTML = ICONS.rows;
 el.refresh.innerHTML = ICONS.sync;
 el.openSettings.innerHTML = ICONS.gear;
 
@@ -26,9 +28,48 @@ window.gprApplyTheme(settings.theme);
 localStorage.setItem('gpr-theme', settings.theme);
 
 const tabs = orderedTabs(settings.tabOrder);
-let activeKey = tabs[0].key; // 사용자가 정한 순서의 첫 탭으로 연다.
+// 마지막으로 연 탭을 기억해 다시 연다. 저장된 탭이 없거나 사라졌으면 사용자가 정한 순서의 첫 탭으로 연다.
+const { popupLastTab } = await chrome.storage.local.get('popupLastTab');
+let activeKey = tabs.some((t) => t.key === popupLastTab) ? popupLastTab : tabs[0].key;
 let data = null; // 현재 화면에 표시 중인 데이터(캐시 포함)
 let loading = false;
+
+// 탭별 스크롤 위치를 기억한다. 첫 렌더에서 한 번만 복원하고, 그 전에는 저장하지 않아 0으로 덮어쓰지 않는다.
+const { popupScroll } = await chrome.storage.local.get('popupScroll');
+const scrollPositions = { ...popupScroll };
+let scrollRestored = false;
+let scrollTimer = null;
+
+function saveScroll() {
+  clearTimeout(scrollTimer);
+  if (!scrollRestored) return;
+  scrollPositions[activeKey] = el.list.scrollTop;
+  chrome.storage.local.set({ popupScroll: scrollPositions }).catch((err) => diag.warn('스크롤 위치 저장 실패', err));
+}
+
+el.list.addEventListener('scroll', () => {
+  clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(saveScroll, 200);
+});
+// 팝업은 포커스를 잃으면 바로 닫히므로 디바운스를 기다리지 않고 저장한다.
+window.addEventListener('pagehide', saveScroll);
+
+// 간단히 보기는 사용자가 직접 켜고 끈 상태만 기억한다. 자동으로 켜지지 않는다.
+function setCompact(on) {
+  document.body.classList.toggle('compact', on);
+  el.compact.setAttribute('aria-pressed', String(on));
+  el.compact.title = on ? '자세히 보기' : '간단히 보기';
+  el.compact.setAttribute('aria-label', el.compact.title);
+}
+
+const { popupCompact } = await chrome.storage.local.get('popupCompact');
+setCompact(popupCompact === true);
+
+el.compact.addEventListener('click', () => {
+  const on = !document.body.classList.contains('compact');
+  setCompact(on);
+  chrome.storage.local.set({ popupCompact: on }).catch((err) => diag.warn('간단히 보기 저장 실패', err));
+});
 
 function openSettings() {
   chrome.runtime.openOptionsPage();
@@ -84,18 +125,21 @@ function setUpdated() {
 function renderBody() {
   const counts = Object.fromEntries(tabs.map((t) => [t.key, data.tabs[t.key]?.length ?? 0]));
   const tab = tabs.find((t) => t.key === activeKey);
-  const scrollTop = el.list.scrollTop;
+  const scrollTop = scrollRestored ? el.list.scrollTop : (scrollPositions[activeKey] ?? 0);
   el.tabs.hidden = false;
   renderTabs(el.tabs, tabs, counts, activeKey, selectTab);
   renderList(el.list, data.tabs[activeKey] ?? [], settings.fields, { emptyText: tab.empty });
   el.list.scrollTop = scrollTop;
+  scrollRestored = true;
 }
 
 function selectTab(key) {
   if (key === activeKey || !data) return;
+  saveScroll();
   activeKey = key;
+  chrome.storage.local.set({ popupLastTab: key }).catch((err) => diag.warn('마지막 탭 저장 실패', err));
   renderBody();
-  el.list.scrollTop = 0;
+  el.list.scrollTop = scrollPositions[key] ?? 0;
 }
 
 async function refresh() {
