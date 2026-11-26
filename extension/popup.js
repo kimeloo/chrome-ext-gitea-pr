@@ -28,7 +28,9 @@ window.gprApplyTheme(settings.theme);
 localStorage.setItem('gpr-theme', settings.theme);
 
 const tabs = orderedTabs(settings.tabOrder);
-let activeKey = tabs[0].key; // 사용자가 정한 순서의 첫 탭으로 연다.
+// 마지막으로 연 탭을 기억해 다시 연다. 저장된 탭이 없거나 사라졌으면 사용자가 정한 순서의 첫 탭으로 연다.
+const { popupLastTab } = await chrome.storage.local.get('popupLastTab');
+let activeKey = tabs.some((t) => t.key === popupLastTab) ? popupLastTab : tabs[0].key;
 let data = null; // 현재 화면에 표시 중인 데이터(캐시 포함)
 let loading = false;
 
@@ -113,6 +115,7 @@ function renderBody() {
 function selectTab(key) {
   if (key === activeKey || !data) return;
   activeKey = key;
+  chrome.storage.local.set({ popupLastTab: key }).catch((err) => diag.warn('마지막 탭 저장 실패', err));
   renderBody();
   el.list.scrollTop = 0;
 }
